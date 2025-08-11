@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      function_usage: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          ip: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          ip: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          ip?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       queries: {
         Row: {
           id: string
