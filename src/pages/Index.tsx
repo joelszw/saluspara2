@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import DOMPurify from "dompurify";
 
 interface QueryItem {
   id: string;
@@ -190,7 +191,10 @@ const Index = () => {
           <section className="mb-8" aria-labelledby="respuesta">
             <h2 id="respuesta" className="text-lg font-semibold mb-2">Respuesta del modelo</h2>
             <article className="prose prose-sm max-w-none bg-card border rounded-xl p-4">
-              <p className="whitespace-pre-wrap">{response}</p>
+              <div
+                className="whitespace-pre-wrap"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(response, { ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], ALLOWED_ATTR: ["href","title","target","rel"] }) }}
+              />
             </article>
           </section>
         )}
