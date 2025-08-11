@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import DOMPurify from "dompurify";
+import Turnstile from "react-turnstile";
+const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? "";
 
 interface QueryItem {
   id: string;
@@ -244,12 +246,13 @@ function AuthForm({ mode, onDone }: { mode: "login" | "signup"; onDone: () => vo
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleEmailAuth = async () => {
     setLoading(true);
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captchaToken || undefined } });
         if (error) throw error;
         toast({ title: "Sesión iniciada", description: "Bienvenido/a" });
       } else {
@@ -257,7 +260,7 @@ function AuthForm({ mode, onDone }: { mode: "login" | "signup"; onDone: () => vo
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: redirectUrl },
+          options: { emailRedirectTo: redirectUrl, captchaToken: captchaToken || undefined },
         });
         if (error) throw error;
         toast({ title: "Registro exitoso", description: "Revisa tu correo para confirmar." });
@@ -281,7 +284,7 @@ function AuthForm({ mode, onDone }: { mode: "login" | "signup"; onDone: () => vo
   const handleReset = async () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl, captchaToken: captchaToken || undefined });
       if (error) throw error;
       toast({ title: "Correo enviado", description: "Revisa tu bandeja de entrada para restablecer la contraseña." });
     } catch (e: any) {
@@ -299,8 +302,20 @@ function AuthForm({ mode, onDone }: { mode: "login" | "signup"; onDone: () => vo
         <label className="text-sm" htmlFor="password">Contraseña</label>
         <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
       </div>
+      <div className="space-y-2">
+        {TURNSTILE_SITE_KEY ? (
+          <Turnstile
+            sitekey={TURNSTILE_SITE_KEY}
+            onVerify={(t) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            theme="auto"
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground">Configura TURNSTILE_SITE_KEY para habilitar el formulario.</p>
+        )}
+      </div>
       <div className="flex gap-2">
-        <Button variant="default" onClick={handleEmailAuth} disabled={loading || !email || !password}>
+        <Button variant="default" onClick={handleEmailAuth} disabled={loading || !email || !password || !TURNSTILE_SITE_KEY || !captchaToken}>
           {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
         </Button>
         <Tooltip>
