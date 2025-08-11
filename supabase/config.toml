@@ -1,1 +1,7 @@
 project_id = "injvwmsqinrcthgdlvux"
+
+[functions.ask-medgemma]
+verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false
