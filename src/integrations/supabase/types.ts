@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      queries: {
+        Row: {
+          id: string
+          prompt: string
+          response: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          prompt: string
+          response?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          prompt?: string
+          response?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          auth_method: string | null
+          created_at: string
+          daily_count: number
+          email: string | null
+          id: string
+          monthly_count: number
+          subscription_status: string
+        }
+        Insert: {
+          auth_method?: string | null
+          created_at?: string
+          daily_count?: number
+          email?: string | null
+          id: string
+          monthly_count?: number
+          subscription_status?: string
+        }
+        Update: {
+          auth_method?: string | null
+          created_at?: string
+          daily_count?: number
+          email?: string | null
+          id?: string
+          monthly_count?: number
+          subscription_status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
