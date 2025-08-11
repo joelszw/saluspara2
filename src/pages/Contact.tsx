@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import Turnstile from "react-turnstile";
+const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? "";
 
 const Contact = () => {
   useEffect(() => {
@@ -38,6 +40,7 @@ const Contact = () => {
 function ContactForm() {
   const [form, setForm] = useState({ nombre: "", apellido: "", pais: "", email: "", telefono: "", consulta: "" });
   const [sending, setSending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -47,7 +50,7 @@ function ContactForm() {
     e.preventDefault();
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-contact-email", { body: form });
+      const { data, error } = await supabase.functions.invoke("send-contact-email", { body: { ...form, captchaToken } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Enviado", description: "¡Gracias! Te responderemos por correo." });
@@ -87,8 +90,18 @@ function ContactForm() {
           <Textarea id="consulta" name="consulta" value={form.consulta} onChange={onChange} required className="min-h-[120px]" />
         </div>
       </div>
-      <div className="flex justify-end">
-        <Button variant="default" type="submit" disabled={sending}>{sending ? "Enviando…" : "Enviar"}</Button>
+      <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3">
+        {!TURNSTILE_SITE_KEY ? (
+          <p className="text-xs text-muted-foreground">Configura TURNSTILE_SITE_KEY para habilitar el envío.</p>
+        ) : (
+          <Turnstile
+            sitekey={TURNSTILE_SITE_KEY}
+            onVerify={(t) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            theme="auto"
+          />
+        )}
+        <Button variant="default" type="submit" disabled={sending || !captchaToken || !TURNSTILE_SITE_KEY}>{sending ? "Enviando…" : "Enviar"}</Button>
       </div>
     </form>
   );

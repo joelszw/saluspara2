@@ -6,12 +6,23 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const HUGGINGFACE_API_TOKEN = Deno.env.get("HUGGINGFACE_API_TOKEN") ?? "";
 const HUGGINGFACE_MODEL_ID = Deno.env.get("HUGGINGFACE_MODEL_ID") ?? "";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET") ?? "";
 
-interface AskRequest { prompt: string; model?: string }
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "*";
+  const allowlist = (Deno.env.get("ALLOWED_ORIGINS") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const allowOrigin = allowlist.length === 0 ? "*" : (allowlist.includes(origin) ? origin : allowlist[0]);
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  } as const;
+}
+
+interface AskRequest { prompt: string; model?: string; captchaToken?: string }
 
 const SYSTEM_PROMPT = `You are a specialized AI assistant powered by MedGemma representing "Salustia by Aware Doctor" on the company's website. You are designed exclusively to provide evidence-based information on traumatology and orthopedic specialties for clinicians, specialists, and multidisciplinary teams.
 
@@ -82,6 +93,7 @@ function startOfMonth(date = new Date()): string {
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -91,7 +103,7 @@ serve(async (req) => {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model } = (await req.json()) as AskRequest;
+    const { prompt, model, captchaToken } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -133,6 +145,38 @@ serve(async (req) => {
           .eq("id", userId)
           .maybeSingle();
         if (userRow?.subscription_status === "active") plan = "pro";
+      }
+    }
+
+    // If unauthenticated, require Turnstile captcha verification
+    if (!userId) {
+      if (!TURNSTILE_SECRET) {
+        return new Response(JSON.stringify({ error: "Falta TURNSTILE_SECRET en los secretos de funciones." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!captchaToken) {
+        return new Response(JSON.stringify({ error: "Captcha requerido para usuarios invitados." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || undefined;
+      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        body: new URLSearchParams({
+          secret: TURNSTILE_SECRET,
+          response: captchaToken,
+          ...(ip ? { remoteip: ip } : {}),
+        }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        return new Response(JSON.stringify({ error: "Captcha inválido." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 

@@ -25,6 +25,7 @@ const Index = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [counts, setCounts] = useState<{ daily: number; monthly: number }>({ daily: 0, monthly: 0 });
+  const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null);
 
   // Auth state
   useEffect(() => {
@@ -86,7 +87,7 @@ const Index = () => {
     setResponse("");
     try {
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: { prompt, model: "meta-llama/Llama-3.3-70B-Instruct:groq" },
+        body: { prompt, model: "meta-llama/Llama-3.3-70B-Instruct:groq", captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined },
       });
       if (error) throw new Error(error.message || "Fallo al invocar la función.");
       if (data?.error) {
@@ -174,7 +175,7 @@ const Index = () => {
               onChange={(e) => setPrompt(e.target.value)}
               className="min-h-[120px]"
             />
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between mt-3 gap-3">
               <div className="text-xs text-muted-foreground">
                 {userId ? (
                   <span>Hoy: {counts.daily}/3 • Mes: {counts.monthly}/20 (Plan gratuito)</span>
@@ -182,9 +183,24 @@ const Index = () => {
                   <span>Consultas restantes como invitado: {guestRemaining} / 3</span>
                 )}
               </div>
-              <Button variant="hero" size="lg" disabled={!prompt.trim() || loading} onClick={handleAsk}>
-                {loading ? "Consultando…" : "Enviar"}
-              </Button>
+              <div className="flex flex-col items-end gap-2">
+                {!userId && TURNSTILE_SITE_KEY && (
+                  <Turnstile
+                    sitekey={TURNSTILE_SITE_KEY}
+                    onVerify={(t) => setGuestCaptchaToken(t)}
+                    onExpire={() => setGuestCaptchaToken(null)}
+                    theme="auto"
+                  />
+                )}
+                <Button
+                  variant="hero"
+                  size="lg"
+                  disabled={!prompt.trim() || loading || (!userId && (!TURNSTILE_SITE_KEY || !guestCaptchaToken))}
+                  onClick={handleAsk}
+                >
+                  {loading ? "Consultando…" : "Enviar"}
+                </Button>
+              </div>
             </div>
           </div>
         </section>
