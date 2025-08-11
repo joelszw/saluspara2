@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const HUGGINGFACE_API_TOKEN = Deno.env.get("HUGGINGFACE_API_TOKEN") ?? "";
+const HUGGINGFACE_MODEL_ID = Deno.env.get("HUGGINGFACE_MODEL_ID") ?? "";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,6 +90,9 @@ serve(async (req) => {
     if (!HUGGINGFACE_API_TOKEN) {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
+    if (!HUGGINGFACE_MODEL_ID) {
+      throw new Error("Falta HUGGINGFACE_MODEL_ID en los secretos de funciones.");
+    }
 
     const { prompt } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
@@ -172,7 +176,7 @@ serve(async (req) => {
     const combinedPrompt = `${SYSTEM_PROMPT}\n\nUser question:\n${rawPrompt}\n\nFollow the STRICT BEHAVIORAL RULES above.`;
     // Call Hugging Face Inference API
     const hfRes = await fetch(
-      "https://api-inference.huggingface.co/models/google/medgemma-4b-it",
+      `https://api-inference.huggingface.co/models/${encodeURIComponent(HUGGINGFACE_MODEL_ID)}`,
       {
         method: "POST",
         headers: {
@@ -188,9 +192,12 @@ serve(async (req) => {
 
     if (!hfRes.ok) {
       const errorText = await hfRes.text();
-      console.error("HuggingFace error:", errorText);
-      return new Response(JSON.stringify({ error: "Error al consultar el modelo." }), {
-        status: 500,
+      console.error("HuggingFace error:", hfRes.status, errorText);
+      const message = hfRes.status === 404
+        ? "Modelo de Hugging Face no encontrado o sin acceso. Verifica HUGGINGFACE_MODEL_ID y los permisos del token."
+        : "Error al consultar el modelo de Hugging Face.";
+      return new Response(JSON.stringify({ error: message, details: errorText }), {
+        status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
