@@ -83,7 +83,7 @@ const Index = () => {
     setResponse("");
     try {
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: { prompt },
+        body: { prompt, model: "HuggingFaceH4/zephyr-7b-beta" },
       });
       if (error) throw new Error(error.message || "Fallo al invocar la función.");
       if (data?.error) {

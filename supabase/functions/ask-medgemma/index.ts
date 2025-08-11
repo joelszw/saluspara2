@@ -11,7 +11,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface AskRequest { prompt: string }
+interface AskRequest { prompt: string; model?: string }
 
 const SYSTEM_PROMPT = `You are a specialized AI assistant powered by MedGemma representing "Salustia by Aware Doctor" on the company's website. You are designed exclusively to provide evidence-based information on traumatology and orthopedic specialties for clinicians, specialists, and multidisciplinary teams.
 
@@ -90,11 +90,8 @@ serve(async (req) => {
     if (!HUGGINGFACE_API_TOKEN) {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
-    if (!HUGGINGFACE_MODEL_ID) {
-      throw new Error("Falta HUGGINGFACE_MODEL_ID en los secretos de funciones.");
-    }
 
-    const { prompt } = (await req.json()) as AskRequest;
+    const { prompt, model } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -106,6 +103,15 @@ serve(async (req) => {
     const MAX_PROMPT_CHARS = 1200;
     if (rawPrompt.length > MAX_PROMPT_CHARS) {
       return new Response(JSON.stringify({ error: `El prompt excede el límite de ${MAX_PROMPT_CHARS} caracteres.` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Determine model ID (request override takes precedence)
+    const reqModel = (model ?? "").trim();
+    const modelId = reqModel || HUGGINGFACE_MODEL_ID;
+    if (!modelId) {
+      return new Response(JSON.stringify({ error: "Falta HUGGINGFACE_MODEL_ID o proporciona 'model' en la petición." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -176,7 +182,7 @@ serve(async (req) => {
     const combinedPrompt = `${SYSTEM_PROMPT}\n\nUser question:\n${rawPrompt}\n\nFollow the STRICT BEHAVIORAL RULES above.`;
     // Call Hugging Face Inference API
     const hfRes = await fetch(
-      `https://api-inference.huggingface.co/models/${encodeURIComponent(HUGGINGFACE_MODEL_ID)}`,
+      `https://api-inference.huggingface.co/models/${encodeURIComponent(modelId)}`,
       {
         method: "POST",
         headers: {
