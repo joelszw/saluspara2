@@ -85,8 +85,11 @@ const Index = () => {
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
         body: { prompt },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(error.message || "Fallo al invocar la función.");
+      if (data?.error) {
+        const details = (data as any).details ? ` — ${(data as any).details}` : "";
+        throw new Error(`${data.error}${details}`);
+      }
       const text = data?.response as string;
       setResponse(text);
 
