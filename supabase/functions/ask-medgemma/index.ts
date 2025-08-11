@@ -107,15 +107,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Determine model ID (request override takes precedence)
     const reqModel = (model ?? "").trim();
-    const modelId = reqModel || HUGGINGFACE_MODEL_ID;
-    if (!modelId) {
-      return new Response(JSON.stringify({ error: "Falta HUGGINGFACE_MODEL_ID o proporciona 'model' en la petición." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const routerModel = reqModel || "meta-llama/Llama-3.3-70B-Instruct:groq";
 
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
@@ -178,45 +171,36 @@ serve(async (req) => {
       }
     }
 
-    // Build constrained prompt to enforce traumatology-only scope
-    const combinedPrompt = `${SYSTEM_PROMPT}\n\nUser question:\n${rawPrompt}\n\nFollow the STRICT BEHAVIORAL RULES above.`;
-    // Call Hugging Face Inference API
-    const hfRes = await fetch(
-      `https://api-inference.huggingface.co/models/${encodeURIComponent(modelId)}`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${HUGGINGFACE_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: combinedPrompt,
-          parameters: { max_new_tokens: 512, temperature: 0.2 },
-        }),
-      }
-    );
+    const systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
+    const routerRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${HUGGINGFACE_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: routerModel,
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: rawPrompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 512,
+      }),
+    });
 
-    if (!hfRes.ok) {
-      const errorText = await hfRes.text();
-      console.error("HuggingFace error:", hfRes.status, errorText);
-      const message = hfRes.status === 404
-        ? "Modelo de Hugging Face no encontrado o sin acceso. Verifica HUGGINGFACE_MODEL_ID y los permisos del token."
-        : "Error al consultar el modelo de Hugging Face.";
-      return new Response(JSON.stringify({ error: message, details: errorText }), {
+    if (!routerRes.ok) {
+      const errorText = await routerRes.text();
+      console.error("HF Router error:", routerRes.status, errorText);
+      return new Response(JSON.stringify({ error: "Error al consultar el router de Hugging Face.", details: errorText }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await hfRes.json();
-    // HF returns array with generated_text or text; support both
-    let generated = "";
-    if (Array.isArray(data)) {
-      const first = data[0];
-      generated = first?.generated_text ?? first?.text ?? JSON.stringify(first);
-    } else if (data?.generated_text || data?.text) {
-      generated = data.generated_text ?? data.text;
-    } else {
+    const data = await routerRes.json();
+    let generated = data?.choices?.[0]?.message?.content ?? "";
+    if (!generated) {
       generated = typeof data === "string" ? data : JSON.stringify(data);
     }
 

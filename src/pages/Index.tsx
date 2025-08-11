@@ -83,7 +83,7 @@ const Index = () => {
     setResponse("");
     try {
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: { prompt, model: "BioMistral/BioMistral-7B" },
+        body: { prompt, model: "meta-llama/Llama-3.3-70B-Instruct:groq" },
       });
       if (error) throw new Error(error.message || "Fallo al invocar la función.");
       if (data?.error) {
