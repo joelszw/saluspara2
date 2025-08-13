@@ -82,7 +82,7 @@ const NewIndex = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header userEmail={userEmail} />
+      <Header userEmail={userEmail} history={history} />
       
       <main>
         <Hero 

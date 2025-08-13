@@ -187,12 +187,19 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
             >
               <div className="rounded-xl border bg-card p-6 text-left">
                 <div
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(response, { 
-                      ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
-                      ALLOWED_ATTR: ["href","title","target","rel"] 
-                    }) 
+                    __html: DOMPurify.sanitize(
+                      response
+                        .replace(/\n/g, '<br>')
+                        .replace(/\*\s/g, '<br>• ')
+                        .replace(/(\d+\.\s)/g, '<br>$1')
+                        .replace(/^\s*<br>/, ''), 
+                      { 
+                        ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
+                        ALLOWED_ATTR: ["href","title","target","rel"] 
+                      }
+                    ) 
                   }}
                 />
               </div>

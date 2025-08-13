@@ -6,12 +6,21 @@ import { LanguageToggle } from "@/components/ui/language-toggle"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/integrations/supabase/client"
 import { AuthForm } from "@/components/auth/AuthForm"
+import { UserHistory } from "./UserHistory"
+
+interface QueryItem {
+  id: string
+  prompt: string
+  response: string | null
+  timestamp: string
+}
 
 interface HeaderProps {
   userEmail: string | null
+  history?: QueryItem[]
 }
 
-export function Header({ userEmail }: HeaderProps) {
+export function Header({ userEmail, history = [] }: HeaderProps) {
   const { t } = useTranslation()
   const [openLogin, setOpenLogin] = useState(false)
   const [openSignup, setOpenSignup] = useState(false)
@@ -43,6 +52,7 @@ export function Header({ userEmail }: HeaderProps) {
           
           {userEmail ? (
             <>
+              <UserHistory history={history} />
               <span className="hidden md:inline text-sm text-muted-foreground mr-2">
                 {userEmail}
               </span>
