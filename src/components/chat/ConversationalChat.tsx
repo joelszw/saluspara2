@@ -50,10 +50,10 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   // Auto scroll to bottom when new messages arrive - Enhanced
   useEffect(() => {
     const scrollToBottom = () => {
-      if (messagesEndRef.current) {
+      if (messagesStartRef.current) {
         // Use smooth scrolling with a slight delay to ensure content is rendered
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ 
+          messagesStartRef.current?.scrollIntoView({ 
             behavior: "smooth", 
             block: "start",
             inline: "nearest"
@@ -62,7 +62,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
     }
     
-    scrollToBottom()
+    scrollToTop()
   }, [messages, loading, suggestions])
 
   // Load chat history from localStorage or database
