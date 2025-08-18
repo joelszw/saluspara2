@@ -47,22 +47,21 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   }, [messages])
 
   // Auto scroll to bottom when new messages arrive - Enhanced
-  useEffect(() => {
-    const scrollToTop = () => {
-      if (messagesStartRef.current) {
-        // Use smooth scrolling with a slight delay to ensure content is rendered
-        setTimeout(() => {
-          messagesStartRef.current?.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "start",
-            inline: "nearest"
-          })
-        }, 100)
-      }
-    }
-    
-    scrollToTop()
-  }, [messages, loading, suggestions])
++ // Auto scroll to top when new messages arrive
++ useEffect(() => {
++   const scrollToTop = () => {
++     if (messagesStartRef.current) {
++       setTimeout(() => {
++         messagesStartRef.current?.scrollIntoView({
++           behavior: "smooth",
++           block: "start",
++           inline: "nearest"
++         })
++       }, 100)
++     }
++   }
++   scrollToTop()
++ }, [messages, loading, suggestions])
 
   // Load chat history from localStorage or database
   useEffect(() => {
@@ -270,6 +269,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
         style={{ scrollBehavior: 'smooth' }}
       >
+          <div ref={messagesStartRef} /> 
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
