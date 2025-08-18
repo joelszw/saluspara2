@@ -268,21 +268,21 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       {/* Chat Messages - Improved container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 flex flex-col justify-end overflow-y-auto px-4 py-2 space-y-3 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
         style={{ scrollBehavior: 'smooth' }}
       >
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-6 text-muted-foreground"
+            className="text-center py-12 text-muted-foreground"
           >
-            <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 100 100" className="text-white" fill="currentColor">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 100 100" className="text-white" fill="currentColor">
                 <path d="M40 10 h20 v30 h30 v20 h-30 v30 h-20 v-30 h-30 v-20 h30 z" />
               </svg>
             </div>
-            <h3 className="text-base font-medium mb-1">{t('chat.welcome_title')}</h3>
+            <h3 className="text-lg font-medium mb-2">{t('chat.welcome_title')}</h3>
             <p className="text-sm">{t('chat.welcome_subtitle')}</p>
           </motion.div>
         )}
@@ -359,8 +359,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       </div>
 
       {/* Input Area - Sticky with improved backdrop */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t px-4 py-2 shadow-lg">
-        <div className="flex flex-col gap-2">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t px-4 py-4 shadow-lg">
+        <div className="flex flex-col gap-3">
           {/* Controls */}
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
@@ -377,7 +377,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </div>
 
           {/* Input */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {!userId && TURNSTILE_SITE_KEY && (
               <div className="flex justify-center">
                 <Turnstile
@@ -395,8 +395,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-36 max-h-[300px] resize-vertical text-base leading-relaxed transition-all duration-200 focus:min-h-40"
-                rows={8}
+                className="min-h-[120px] max-h-[300px] resize-none text-base leading-relaxed transition-all duration-200 focus:min-h-[160px]"
+                rows={6}
                 disabled={loading}
               />
               
