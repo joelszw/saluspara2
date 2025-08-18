@@ -73,6 +73,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
       if (userId && queryId) {
         setLoadingSummary(true)
         try {
+          console.log("Generating summary for queryId:", queryId, "userId:", userId)
           const { data: summaryData, error: summaryError } = await supabase.functions.invoke("generate-summary", {
             body: { 
               queryId,
@@ -81,8 +82,12 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
             },
           })
           
+          console.log("Summary response:", summaryData, "Error:", summaryError)
+          
           if (!summaryError && summaryData?.summary) {
             setSummary(summaryData.summary)
+          } else {
+            console.error("Summary generation failed:", summaryError)
           }
         } catch (e) {
           console.error("Error generating summary:", e)

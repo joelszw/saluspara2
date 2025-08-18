@@ -183,6 +183,7 @@ interface MedicalTermsTooltipProps {
 export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
   const [hoveredTerm, setHoveredTerm] = useState<string | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [usedReferences, setUsedReferences] = useState<Set<string>>(new Set())
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   const handleTermHover = (term: string, event: React.MouseEvent) => {
@@ -201,6 +202,8 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
   // Function to highlight medical terms in text
   const highlightMedicalTerms = (inputText: string) => {
     let highlightedText = inputText
+    const processedTerms = new Set<string>()
+    const references = new Set<string>()
     
     // Extract words from text for analysis
     const words = inputText.match(/\b[A-Za-záéíóúüñÁÉÍÓÚÜÑ]+\b/g) || []
@@ -227,16 +230,27 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
     // Sort by length (longest first) to avoid partial matches
     medicalTermsFound.sort((a, b) => b.length - a.length)
     
-    // Apply highlighting
+    // Apply highlighting (only first occurrence)
     medicalTermsFound.forEach(term => {
-      const regex = new RegExp(`\\b${term}\\b`, 'gi')
+      const termLower = term.toLowerCase()
+      if (processedTerms.has(termLower)) return
+      
+      // Get term info and add reference
+      const termInfo = MEDICAL_TERMS[termLower] || generateBasicDefinition(term)
+      references.add(termInfo.reference)
+      
+      const regex = new RegExp(`\\b${term}\\b`, 'i') // Only match first occurrence
       highlightedText = highlightedText.replace(regex, (match) => {
+        processedTerms.add(termLower)
         return `<span 
           class="medical-term cursor-help underline decoration-dotted decoration-primary/60 hover:decoration-solid hover:bg-primary/10 rounded px-1 transition-all duration-200" 
           data-term="${match.toLowerCase()}"
         >${match}</span>`
       })
     })
+    
+    // Update references state
+    setUsedReferences(references)
     
     return highlightedText
   }
@@ -282,6 +296,20 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
           __html: highlightMedicalTerms(text) 
         }} 
       />
+      
+      {/* References section */}
+      {usedReferences.size > 0 && (
+        <div className="mt-6 pt-4 border-t border-border">
+          <h4 className="text-sm font-semibold text-foreground mb-3">📚 Referencias utilizadas:</h4>
+          <ul className="space-y-1">
+            {Array.from(usedReferences).map((reference, index) => (
+              <li key={index} className="text-xs text-muted-foreground">
+                <span className="font-medium">[{index + 1}]</span> {reference}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       
       <AnimatePresence>
         {hoveredTerm && (
