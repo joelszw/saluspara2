@@ -47,12 +47,23 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     return Math.max(0, 3 - used)
   }, [messages])
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto scroll to bottom when new messages arrive - Enhanced
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        // Use smooth scrolling with a slight delay to ensure content is rendered
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "end",
+            inline: "nearest"
+          })
+        }, 100)
+      }
     }
-  }, [messages, loading])
+    
+    scrollToBottom()
+  }, [messages, loading, suggestions])
 
   // Load chat history from localStorage or database
   useEffect(() => {
@@ -254,10 +265,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
-      {/* Chat Messages */}
+      {/* Chat Messages - Improved container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-6 space-y-1 max-h-[60vh] scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
+        style={{ scrollBehavior: 'smooth' }}
       >
         {messages.length === 0 && (
           <motion.div
@@ -275,8 +287,13 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </motion.div>
         )}
 
-        {messages.map((message) => (
-          <div key={message.id}>
+        {messages.map((message, index) => (
+          <motion.div 
+            key={message.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
+          >
             {message.type === 'user' ? (
               <ChatBubbleUser 
                 message={message.content}
@@ -290,24 +307,36 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 loadingSummary={loadingSummary}
               />
             )}
-          </div>
+          </motion.div>
         ))}
 
         {loading && (
-          <ChatBubbleAI
-            message=""
-            timestamp={new Date().toISOString()}
-            isLoading={true}
-          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ChatBubbleAI
+              message=""
+              timestamp={new Date().toISOString()}
+              isLoading={true}
+            />
+          </motion.div>
         )}
 
         {/* Follow-up suggestions */}
         {suggestions.length > 0 && !loading && (
-          <FollowUpSuggestions
-            suggestions={suggestions}
-            onSuggestionClick={handleSuggestionClick}
-            isLoading={loadingSuggestions}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <FollowUpSuggestions
+              suggestions={suggestions}
+              onSuggestionClick={handleSuggestionClick}
+              isLoading={loadingSuggestions}
+            />
+          </motion.div>
         )}
 
         {/* Show Europe PMC References at the bottom after all messages and suggestions */}
@@ -329,8 +358,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Sticky */}
-      <div className="sticky bottom-0 bg-background border-t px-4 py-4">
+      {/* Input Area - Sticky with improved backdrop */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t px-4 py-4 shadow-lg">
         <div className="flex flex-col gap-3">
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -366,8 +395,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-[160px] max-h-[300px] resize-none text-base leading-relaxed"
-                rows={8}
+                className="min-h-[120px] max-h-[300px] resize-none text-base leading-relaxed transition-all duration-200 focus:min-h-[160px]"
+                rows={6}
                 disabled={loading}
               />
               
