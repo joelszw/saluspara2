@@ -124,9 +124,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
     }
 
-    // Add user message
+    // Add user message immediately
     const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: `user_${Date.now()}`,
       type: 'user',
       content: currentPrompt,
       timestamp: new Date().toISOString()
@@ -173,9 +173,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       const response = data?.response as string
       const queryId = data?.queryId as string
       
-      // Add AI message
+      // Add AI message after user message
       const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: `ai_${Date.now() + Math.random()}`,
         type: 'ai',
         content: response,
         timestamp: new Date().toISOString(),
