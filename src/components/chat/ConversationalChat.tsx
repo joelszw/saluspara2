@@ -39,9 +39,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesStartRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
-
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
     return Math.max(0, 3 - used)
