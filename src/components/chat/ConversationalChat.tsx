@@ -49,7 +49,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
 
   // Auto scroll to bottom when new messages arrive - Enhanced
   useEffect(() => {
-    const scrollToBottom = () => {
+    const scrollToTop = () => {
       if (messagesStartRef.current) {
         // Use smooth scrolling with a slight delay to ensure content is rendered
         setTimeout(() => {
