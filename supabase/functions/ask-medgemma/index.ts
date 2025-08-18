@@ -24,6 +24,63 @@ function getCorsHeaders(req: Request) {
 
 interface AskRequest { prompt: string; model?: string; captchaToken?: string; europePMCContext?: any[] }
 
+// Security: PII detection patterns for medical data
+const PII_PATTERNS = [
+  /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/g, // Credit card numbers
+  /\b\d{3}-?\d{2}-?\d{4}\b/g, // SSN-like patterns
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, // Email addresses
+  /\b\d{3}-?\d{3}-?\d{4}\b/g, // Phone numbers
+  /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, // Dates (potential birthdates)
+];
+
+// Security: Detect potentially sensitive information
+function detectPII(text: string): { hasPII: boolean; patterns: string[] } {
+  const foundPatterns: string[] = [];
+  let hasPII = false;
+
+  PII_PATTERNS.forEach((pattern, index) => {
+    if (pattern.test(text)) {
+      hasPII = true;
+      switch (index) {
+        case 0: foundPatterns.push("credit_card"); break;
+        case 1: foundPatterns.push("ssn_like"); break;
+        case 2: foundPatterns.push("email"); break;
+        case 3: foundPatterns.push("phone"); break;
+        case 4: foundPatterns.push("date"); break;
+      }
+    }
+  });
+
+  return { hasPII, patterns: foundPatterns };
+}
+
+// Security: Log security events
+function logSecurityEvent(event: string, details: any) {
+  console.warn(`[SECURITY] ${event}:`, JSON.stringify(details));
+}
+
+// Security: Rate limiting by IP for anonymous users
+const IP_RATE_LIMIT = new Map<string, { count: number; lastReset: number }>();
+const IP_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const IP_MAX_REQUESTS = 5; // 5 requests per minute per IP
+
+function checkIPRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = IP_RATE_LIMIT.get(ip);
+  
+  if (!record || now - record.lastReset > IP_LIMIT_WINDOW) {
+    IP_RATE_LIMIT.set(ip, { count: 1, lastReset: now });
+    return true;
+  }
+  
+  if (record.count >= IP_MAX_REQUESTS) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
 const SYSTEM_PROMPT = `You are a specialized AI assistant powered by MedGemma representing "Salustia by Aware Doctor" on the company's website. You are designed exclusively to provide evidence-based information on traumatology and orthopedic specialties for clinicians, specialists, and multidisciplinary teams.
 
 Your scope is strictly limited to the following traumatology and orthopedic domains:
@@ -148,8 +205,44 @@ serve(async (req) => {
       }
     }
 
-    // If unauthenticated, require Turnstile captcha verification
+    // Security: Get client IP for rate limiting and logging
+    const clientIP = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown";
+
+    // Security: PII detection for all queries
+    const piiCheck = detectPII(rawPrompt);
+    if (piiCheck.hasPII) {
+      logSecurityEvent("PII_DETECTED", {
+        userId: userId || "anonymous",
+        ip: clientIP,
+        patterns: piiCheck.patterns,
+        promptLength: rawPrompt.length
+      });
+      
+      // For anonymous users, reject queries with PII
+      if (!userId) {
+        return new Response(JSON.stringify({ 
+          error: "Por seguridad, no se permiten consultas con información personal identificable. Por favor, reformule su pregunta sin incluir datos personales." 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // If unauthenticated, require Turnstile captcha verification and apply IP rate limiting
     if (!userId) {
+      // Security: Apply IP-based rate limiting for anonymous users
+      if (!checkIPRateLimit(clientIP)) {
+        logSecurityEvent("IP_RATE_LIMIT_EXCEEDED", {
+          ip: clientIP,
+          promptLength: rawPrompt.length
+        });
+        return new Response(JSON.stringify({ error: "Demasiadas solicitudes desde esta dirección IP. Intente de nuevo en unos minutos." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (!TURNSTILE_SECRET) {
         return new Response(JSON.stringify({ error: "Falta TURNSTILE_SECRET en los secretos de funciones." }), {
           status: 500,
@@ -162,17 +255,21 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || undefined;
+      
       const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         method: "POST",
         body: new URLSearchParams({
           secret: TURNSTILE_SECRET,
           response: captchaToken,
-          ...(ip ? { remoteip: ip } : {}),
+          ...(clientIP !== "unknown" ? { remoteip: clientIP } : {}),
         }),
       });
       const verifyData = await verifyRes.json();
       if (!verifyData.success) {
+        logSecurityEvent("CAPTCHA_FAILED", {
+          ip: clientIP,
+          error: verifyData
+        });
         return new Response(JSON.stringify({ error: "Captcha inválido." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

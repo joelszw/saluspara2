@@ -23,6 +23,22 @@ interface SearchRequest {
   prompt: string;
 }
 
+// Security: Input validation and sanitization
+function sanitizePrompt(prompt: string): string {
+  // Remove potential script injections and limit length
+  return prompt
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim()
+    .substring(0, 500);
+}
+
+// Security: Log security events
+function logSecurityEvent(event: string, details: any) {
+  console.warn(`[SECURITY] ${event}:`, JSON.stringify(details));
+}
+
 interface EuropePMCArticle {
   id: string;
   title: string;
@@ -167,10 +183,36 @@ serve(async (req) => {
       });
     }
 
-    console.log("Starting Europe PMC search for prompt:", prompt);
+    // Security: Get client IP for logging
+    const clientIP = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown";
 
-    // Step 1: Translate to English
-    const translatedPrompt = await translateToEnglish(prompt);
+    // Security: Sanitize input prompt
+    const sanitizedPrompt = sanitizePrompt(prompt);
+    
+    if (sanitizedPrompt !== prompt) {
+      logSecurityEvent("PROMPT_SANITIZED", {
+        originalLength: prompt.length,
+        sanitizedLength: sanitizedPrompt.length,
+        ip: clientIP
+      });
+    }
+
+    // Security: Validate prompt length
+    if (sanitizedPrompt.length > 500) {
+      logSecurityEvent("PROMPT_TOO_LONG", {
+        promptLength: sanitizedPrompt.length,
+        ip: clientIP
+      });
+      return new Response(JSON.stringify({ error: "El prompt excede el límite de 500 caracteres." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Starting Europe PMC search for prompt:", sanitizedPrompt);
+
+    // Step 1: Translate to English (using sanitized prompt)
+    const translatedPrompt = await translateToEnglish(sanitizedPrompt);
     console.log("Translated prompt:", translatedPrompt);
 
     // Step 2: Extract keywords
