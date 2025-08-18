@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
-// Medical terms dictionary for traumatology and orthopedics
+// Extended medical terms dictionary for traumatology and orthopedics
 const MEDICAL_TERMS: Record<string, { definition: string; reference: string }> = {
   "hallux valgus": {
     definition: "Deformidad del primer dedo del pie donde el hallux se desvía hacia los dedos menores, formando un ángulo anormal en la articulación metatarsofalángica.",
@@ -15,53 +15,164 @@ const MEDICAL_TERMS: Record<string, { definition: string; reference: string }> =
     definition: "Fusión quirúrgica de una articulación, eliminando el movimiento articular para lograr estabilidad y aliviar el dolor.",
     reference: "Coughlin MJ, Mann RA. Surgery of the Foot and Ankle. 8th ed. Mosby; 2007."
   },
-  "metatarsalgia": {
-    definition: "Dolor en la región plantar del antepié, específicamente en la zona de los huesos metatarsianos, frecuentemente asociado con sobrecarga mecánica.",
-    reference: "Espinosa et al. Current concept review: metatarsalgia. Foot Ankle Int. 2008."
+  "artroplastia": {
+    definition: "Procedimiento quirúrgico de reemplazo articular donde se sustituye una articulación dañada por una prótesis artificial.",
+    reference: "Learmonth ID, Young C, Rorabeck C. The operation of the century: total hip replacement. Lancet. 2007."
   },
-  "fascitis plantar": {
-    definition: "Inflamación de la fascia plantar, banda de tejido que conecta el calcáneo con los dedos, causando dolor en el talón y planta del pie.",
-    reference: "Buchbinder R. Clinical practice. Plantar fasciitis. N Engl J Med. 2004."
+  "condromalacia": {
+    definition: "Degeneración del cartílago articular, comúnmente afecta la rótula causando dolor y crepitación.",
+    reference: "Bentley G, Dowd G. Current concepts of etiology and treatment of chondromalacia patellae. Clin Orthop Relat Res. 1984."
   },
-  "síndrome del túnel carpiano": {
-    definition: "Neuropatía compresiva del nervio mediano a su paso por el túnel carpiano en la muñeca, causando entumecimiento y dolor en la mano.",
-    reference: "Atroshi et al. Prevalence of carpal tunnel syndrome in a general population. JAMA. 1999."
+  "sinovitis": {
+    definition: "Inflamación de la membrana sinovial que recubre las articulaciones, causando dolor, hinchazón y limitación del movimiento.",
+    reference: "Goldenberg DL. Septic arthritis. Lancet. 1998."
   },
-  "luxación": {
-    definition: "Pérdida completa del contacto entre las superficies articulares de una articulación, requiriendo reducción para restaurar la anatomía normal.",
-    reference: "Court-Brown CM, Heckman JD, McQueen MM, et al. Rockwood and Green's Fractures in Adults. 8th ed."
+  "bursitis": {
+    definition: "Inflamación de las bursas, pequeñas bolsas llenas de líquido que actúan como amortiguadores entre huesos, tendones y músculos.",
+    reference: "Zimmermann B 3rd, Mikolich DJ, Ho G Jr. Septic bursitis. Semin Arthritis Rheum. 1995."
   },
-  "fractura": {
-    definition: "Interrupción en la continuidad del hueso causada por trauma, fatiga o condiciones patológicas, clasificada según localización, patrón y desplazamiento.",
-    reference: "AO Foundation. AO Principles of Fracture Management. 2nd ed."
+  "epicondilitis": {
+    definition: "Inflamación de los tendones que se insertan en los epicóndilos del húmero, conocida como 'codo de tenista' (lateral) o 'codo de golfista' (medial).",
+    reference: "Shiri R, Viikari-Juntura E, Varonen H, Heliövaara M. Prevalence and determinants of lateral and medial epicondylitis. Am J Epidemiol. 2006."
   },
-  "artrosis": {
-    definition: "Enfermedad degenerativa articular caracterizada por pérdida del cartílago articular, formación de osteofitos y cambios subcondrales.",
-    reference: "Hunter DJ, Bierma-Zeinstra S. Osteoarthritis. Lancet. 2019."
+  "tenosinovitis": {
+    definition: "Inflamación de la vaina sinovial que rodea los tendones, causando dolor y limitación del movimiento.",
+    reference: "Huisstede BM, Coert JH, Fridén J, Hoogvliet P. Consensus on a multidisciplinary treatment guideline for de Quervain disease. Plast Reconstr Surg. 2014."
   },
-  "tendinopatía": {
-    definition: "Término general para describir condiciones dolorosas que afectan los tendones, incluyendo tendinitis, tendinosis y rupturas parciales.",
-    reference: "Cook JL, Purdam CR. Is tendon pathology a continuum? A pathology model to explain the clinical presentation of load-induced tendinopathy. Br J Sports Med. 2009."
+  "escoliosis": {
+    definition: "Curvatura lateral anormal de la columna vertebral mayor a 10 grados, puede ser idiopática, congénita o neuromuscular.",
+    reference: "Weinstein SL, Dolan LA, Cheng JC, et al. Adolescent idiopathic scoliosis. Lancet. 2008."
   },
-  "menisco": {
-    definition: "Estructuras fibrocartilaginosas en forma de C ubicadas en la rodilla entre el fémur y la tibia, que actúan como amortiguadores y estabilizadores.",
-    reference: "Fox AJ, Bedi A, Rodeo SA. The basic science of the patella: structure, composition, and function. J Knee Surg. 2012."
+  "cifosis": {
+    definition: "Curvatura excesiva hacia adelante de la columna vertebral torácica, creando una apariencia de joroba.",
+    reference: "Scheuermann HW. Kyphosis dorsalis juvenilis. Ugeskr Laeger. 1920."
   },
-  "ligamento cruzado anterior": {
-    definition: "Ligamento intrarticular de la rodilla que previene el desplazamiento anterior de la tibia respecto al fémur y proporciona estabilidad rotacional.",
-    reference: "Boden BP, Dean GS, Feagin JA Jr, Garrett WE Jr. Mechanisms of anterior cruciate ligament injury. Orthopedics. 2000."
+  "lordosis": {
+    definition: "Curvatura excesiva hacia adentro de la columna vertebral lumbar o cervical.",
+    reference: "Been E, Kalichman L. Lumbar lordosis. Spine J. 2014."
   },
-  "lca": {
-    definition: "Siglas de Ligamento Cruzado Anterior. Ligamento intrarticular de la rodilla que previene el desplazamiento anterior de la tibia respecto al fémur.",
-    reference: "Boden BP, Dean GS, Feagin JA Jr, Garrett WE Jr. Mechanisms of anterior cruciate ligament injury. Orthopedics. 2000."
+  "espondilolistesis": {
+    definition: "Deslizamiento hacia adelante de una vértebra sobre la vértebra inferior, comúnmente en L5 sobre S1.",
+    reference: "Wiltse LL, Newman PH, Macnab I. Classification of spondylolisis and spondylolisthesis. Clin Orthop Relat Res. 1976."
   },
-  "rmn": {
-    definition: "Resonancia Magnética Nuclear. Técnica de imagen médica que utiliza campos magnéticos para visualizar estructuras internas sin radiación ionizante.",
-    reference: "Helms CA, Major NM, Anderson MW, et al. Musculoskeletal MRI. 3rd ed. Elsevier; 2020."
+  "espondilosis": {
+    definition: "Degeneración de los discos intervertebrales y cambios osteoartríticos en las vértebras.",
+    reference: "Kirkaldy-Willis WH, Farfan HF. Instability of the lumbar spine. Clin Orthop Relat Res. 1982."
   },
-  "tac": {
-    definition: "Tomografía Axial Computarizada. Técnica de imagen que utiliza rayos X para crear imágenes transversales detalladas del cuerpo.",
-    reference: "Novelline RA. Squire's Fundamentals of Radiology. 6th ed. Harvard University Press; 2004."
+  "hernia discal": {
+    definition: "Protrusión del núcleo pulposo del disco intervertebral a través de fisuras en el anillo fibroso.",
+    reference: "Mixter WJ, Barr JS. Rupture of the intervertebral disc with involvement of the spinal canal. N Engl J Med. 1934."
+  },
+  "radiculopatía": {
+    definition: "Disfunción de una raíz nerviosa espinal que causa dolor, debilidad, entumecimiento en la distribución del nervio afectado.",
+    reference: "Tarulli AW, Raynor EM. Lumbosacral radiculopathy. Neurol Clin. 2007."
+  },
+  "mielopatía": {
+    definition: "Disfunción de la médula espinal causada por compresión, inflamación o lesión vascular.",
+    reference: "Young WF. Cervical spondylotic myelopathy: a common cause of spinal cord dysfunction in older persons. Am Fam Physician. 2000."
+  },
+  "claudicación neurógena": {
+    definition: "Dolor y debilidad en las piernas al caminar, causado por estenosis del canal espinal.",
+    reference: "Katz JN, Harris MB. Clinical practice. Lumbar spinal stenosis. N Engl J Med. 2008."
+  }
+}
+
+// Medical patterns for automatic detection
+const MEDICAL_PATTERNS = {
+  // Medical suffixes
+  suffixes: [
+    'itis', 'osis', 'oma', 'emia', 'uria', 'algia', 'patía', 'plasty', 'ectomy', 
+    'otomy', 'scopy', 'graphy', 'metry', 'therapy', 'lysis', 'genesis', 'trophy'
+  ],
+  // Medical prefixes
+  prefixes: [
+    'artro', 'osteo', 'condro', 'mio', 'neuro', 'cardio', 'gastro', 'hepato',
+    'nefro', 'pneumo', 'hemo', 'leuco', 'eritro', 'meta', 'hiper', 'hipo'
+  ],
+  // Common medical acronyms
+  acronyms: [
+    'LCA', 'LCP', 'LCM', 'LCL', 'ATM', 'ITB', 'RICE', 'AINE', 'AAS', 'PCR',
+    'VSG', 'EMG', 'ENG', 'RM', 'TAC', 'RX', 'ECG', 'EEG', 'PET', 'SPECT'
+  ]
+}
+
+// Function to detect if a word is likely a medical term
+const isMedicalTerm = (word: string): boolean => {
+  const cleanWord = word.toLowerCase().trim()
+  
+  // Check if already in dictionary
+  if (MEDICAL_TERMS[cleanWord]) return true
+  
+  // Check medical suffixes
+  const hasMedicalSuffix = MEDICAL_PATTERNS.suffixes.some(suffix => 
+    cleanWord.endsWith(suffix) && cleanWord.length > suffix.length + 2
+  )
+  
+  // Check medical prefixes
+  const hasMedicalPrefix = MEDICAL_PATTERNS.prefixes.some(prefix => 
+    cleanWord.startsWith(prefix) && cleanWord.length > prefix.length + 2
+  )
+  
+  // Check if it's a medical acronym (2-5 uppercase letters)
+  const isAcronym = /^[A-Z]{2,5}$/.test(word) && MEDICAL_PATTERNS.acronyms.includes(word)
+  
+  // Check if it contains medical word patterns
+  const hasAnatomicalTerms = /^(cervical|torácic|lumbar|sacr|coccíge|femor|tibi|húmer|radi|cubit|metacarp|metatars|falang)/i.test(cleanWord)
+  
+  return hasMedicalSuffix || hasMedicalPrefix || isAcronym || hasAnatomicalTerms
+}
+
+// Generate basic definition for unknown medical terms
+const generateBasicDefinition = (term: string): { definition: string; reference: string } => {
+  const cleanTerm = term.toLowerCase()
+  
+  // Pattern-based definitions
+  if (cleanTerm.endsWith('itis')) {
+    return {
+      definition: `Inflamación de ${cleanTerm.replace('itis', '')}. Condición caracterizada por dolor, hinchazón y posible pérdida de función.`,
+      reference: "Definición basada en patrones médicos estándar."
+    }
+  }
+  
+  if (cleanTerm.endsWith('osis')) {
+    return {
+      definition: `Condición o proceso degenerativo relacionado con ${cleanTerm.replace('osis', '')}. Estado patológico crónico.`,
+      reference: "Definición basada en patrones médicos estándar."
+    }
+  }
+  
+  if (cleanTerm.endsWith('oma')) {
+    return {
+      definition: `Tumor o masa relacionada con ${cleanTerm.replace('oma', '')}. Crecimiento anormal de tejido.`,
+      reference: "Definición basada en patrones médicos estándar."
+    }
+  }
+  
+  if (cleanTerm.endsWith('algia')) {
+    return {
+      definition: `Dolor en ${cleanTerm.replace('algia', '')}. Síntoma caracterizado por molestia o dolor localizado.`,
+      reference: "Definición basada en patrones médicos estándar."
+    }
+  }
+  
+  if (cleanTerm.startsWith('artro')) {
+    return {
+      definition: `Término relacionado con articulaciones. ${term} se refiere a una condición, procedimiento o estructura articular.`,
+      reference: "Definición basada en terminología médica estándar."
+    }
+  }
+  
+  if (cleanTerm.startsWith('osteo')) {
+    return {
+      definition: `Término relacionado con huesos. ${term} se refiere a una condición, procedimiento o estructura ósea.`,
+      reference: "Definición basada en terminología médica estándar."
+    }
+  }
+  
+  // Default for unrecognized terms
+  return {
+    definition: `Término médico especializado: ${term}. Se recomienda consultar literatura médica específica para definición detallada.`,
+    reference: "Consulte fuentes médicas especializadas para información detallada."
   }
 }
 
@@ -90,17 +201,39 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
   // Function to highlight medical terms in text
   const highlightMedicalTerms = (inputText: string) => {
     let highlightedText = inputText
-    const termEntries = Object.entries(MEDICAL_TERMS)
+    
+    // Extract words from text for analysis
+    const words = inputText.match(/\b[A-Za-záéíóúüñÁÉÍÓÚÜÑ]+\b/g) || []
+    const uniqueWords = [...new Set(words)]
+    
+    // Find all medical terms (both dictionary and pattern-based)
+    const medicalTermsFound: string[] = []
+    
+    // Check dictionary terms first (exact matches)
+    Object.keys(MEDICAL_TERMS).forEach(term => {
+      const regex = new RegExp(`\\b${term}\\b`, 'gi')
+      if (regex.test(inputText)) {
+        medicalTermsFound.push(term)
+      }
+    })
+    
+    // Check for pattern-based medical terms
+    uniqueWords.forEach(word => {
+      if (isMedicalTerm(word) && !MEDICAL_TERMS[word.toLowerCase()]) {
+        medicalTermsFound.push(word)
+      }
+    })
     
     // Sort by length (longest first) to avoid partial matches
-    termEntries.sort(([a], [b]) => b.length - a.length)
+    medicalTermsFound.sort((a, b) => b.length - a.length)
     
-    termEntries.forEach(([term, data]) => {
+    // Apply highlighting
+    medicalTermsFound.forEach(term => {
       const regex = new RegExp(`\\b${term}\\b`, 'gi')
       highlightedText = highlightedText.replace(regex, (match) => {
         return `<span 
           class="medical-term cursor-help underline decoration-dotted decoration-primary/60 hover:decoration-solid hover:bg-primary/10 rounded px-1 transition-all duration-200" 
-          data-term="${term}"
+          data-term="${match.toLowerCase()}"
         >${match}</span>`
       })
     })
@@ -151,7 +284,7 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
       />
       
       <AnimatePresence>
-        {hoveredTerm && MEDICAL_TERMS[hoveredTerm] && (
+        {hoveredTerm && (
           <motion.div
             ref={tooltipRef}
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
@@ -165,19 +298,24 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
               transform: 'translateX(-50%) translateY(-100%)'
             }}
           >
-            <div className="space-y-2">
-              <h4 className="font-semibold text-primary capitalize">
-                {hoveredTerm}
-              </h4>
-              <p className="text-sm text-foreground leading-relaxed">
-                {MEDICAL_TERMS[hoveredTerm].definition}
-              </p>
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground italic">
-                  <strong>Referencia:</strong> {MEDICAL_TERMS[hoveredTerm].reference}
-                </p>
-              </div>
-            </div>
+            {(() => {
+              const termInfo = MEDICAL_TERMS[hoveredTerm] || generateBasicDefinition(hoveredTerm)
+              return (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-primary capitalize">
+                    {hoveredTerm}
+                  </h4>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {termInfo.definition}
+                  </p>
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground italic">
+                      <strong>Referencia:</strong> {termInfo.reference}
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
             
             {/* Arrow pointing down */}
             <div 
