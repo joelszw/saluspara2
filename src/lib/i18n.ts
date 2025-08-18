@@ -56,6 +56,13 @@ const resources = {
       "auth.google": "Google",
       "auth.forgot_password": "¿Olvidaste tu contraseña?",
       
+      // References Section
+      "references.title": "Referencias utilizadas",
+      "references.expand": "Ver referencias ({{count}})",
+      "references.collapse": "Ocultar referencias",
+      "references.disclaimer.title": "Aviso importante:",
+      "references.disclaimer.text": "Referencias para contrastar; no diagnóstico oficial. Siempre consulte con literatura especializada y colegas para decisiones clínicas.",
+
       // Footer
       "footer.legal": "Aviso legal",
       "footer.privacy": "Privacidad",
@@ -118,6 +125,13 @@ const resources = {
       "auth.google": "Google",
       "auth.forgot_password": "Forgot your password?",
       
+      // References Section
+      "references.title": "References used",
+      "references.expand": "View references ({{count}})",
+      "references.collapse": "Hide references",
+      "references.disclaimer.title": "Important notice:",
+      "references.disclaimer.text": "References for contrast; not official diagnosis. Always consult specialized literature and colleagues for clinical decisions.",
+
       // Footer
       "footer.legal": "Legal notice",
       "footer.privacy": "Privacy",

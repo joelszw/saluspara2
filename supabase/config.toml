@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.send-contact-email]
 verify_jwt = false
+
+[functions.generate-summary]
+verify_jwt = false
+
+[functions.europe-pmc-search]
+verify_jwt = false

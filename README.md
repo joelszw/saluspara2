@@ -1,8 +1,80 @@
-# Welcome to your Lovable project
+# Salustia - Medical AI Assistant
 
-## Project info
+Asistente médico especializado en traumatología y ortopedia con integración a Europe PMC para referencias científicas actualizadas.
 
 **URL**: https://lovable.dev/projects/9baa9f83-e7e2-41c4-99b1-1d9cc5a03258
+
+## 🚀 Características
+
+- **IA Médica Especializada**: Respuestas precisas en traumatología y ortopedia
+- **Referencias Científicas**: Búsqueda automática en Europe PMC con artículos de los últimos 3 años  
+- **Traducción Automática**: Traduce consultas de español a inglés para búsquedas más efectivas
+- **Extracción de Palabras Clave**: Identifica términos médicos relevantes automáticamente
+- **Sistema de Créditos**: Control de uso con planes freemium (INTACTO - NO modificar)
+- **Multiidioma**: Soporte completo ES/EN
+- **Dark Mode**: Tema oscuro por defecto con toggle
+- **Responsive**: Diseño optimizado para todos los dispositivos
+
+## 🛠️ Stack Tecnológico
+
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: Tailwind CSS + Framer Motion
+- **Backend**: Supabase + Edge Functions
+- **IA**: Hugging Face (MedGemma, Llama 3.3)
+- **Referencias**: Europe PMC API
+- **i18n**: react-i18next
+
+## 📚 Europe PMC Integration
+
+### Flujo de Búsqueda de Referencias
+
+1. **Traducción**: Consulta del usuario (ES) → Inglés usando HuggingFace
+2. **Extracción**: Identificación de 3-5 palabras clave médicas  
+3. **Búsqueda**: Query a Europe PMC con filtros temporales (últimos 3 años)
+4. **Contexto**: Artículos incluidos automáticamente en el prompt de MedGemma
+5. **Display**: Sección expandible con referencias citadas
+
+### Personalización Europe PMC
+
+#### Modificar Modelo de Traducción
+En `supabase/functions/europe-pmc-search/index.ts`:
+```typescript
+// Cambiar el modelo de traducción si es necesario
+model: "meta-llama/Llama-3.3-70B-Instruct:groq" // Actual
+```
+
+#### Ajustar Query Europe PMC
+```typescript
+const searchUrl = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&resultType=core&format=json&fromDate=${fromYear}-01-01&toDate=${currentYear}-12-31&pageSize=5`;
+
+// Filtros adicionales disponibles:
+// &source=MED para solo PubMed  
+// &journalTitle="Nature" para revista específica
+```
+
+#### Filtros Temporales
+```typescript
+const fromYear = currentYear - 3; // Actual: últimos 3 años
+// Cambiar a currentYear - 5 para expandir a 5 años
+```
+
+## 🔐 Seguridad (CRÍTICO - NO TOCAR)
+
+- **JWT Authentication**: Via Supabase Auth - INTACTO
+- **Rate Limiting**: Por plan de usuario - INTACTO  
+- **Créditos/Consumo**: Sistema actual - INTACTO
+- **RLS Policies**: Control de acceso - INTACTO
+- **Tablas de usuarios**: Schema actual - INTACTO
+- **Edge Functions existentes**: ask-medgemma preservado
+
+## ⚠️ Importantes Salvaguardas
+
+- **NO** modificar autenticación/registro existente
+- **NO** tocar lógica de créditos por prompt
+- **NO** exponer tokens de APIs en el frontend  
+- **NO** cambiar nombres de tablas sin autorización
+- **MANTENER** todos los endpoints server-side existentes
+- **USAR** solo el design system para colores/estilos
 
 ## How can I edit this code?
 

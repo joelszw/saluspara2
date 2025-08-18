@@ -22,7 +22,7 @@ function getCorsHeaders(req: Request) {
   } as const;
 }
 
-interface AskRequest { prompt: string; model?: string; captchaToken?: string }
+interface AskRequest { prompt: string; model?: string; captchaToken?: string; europePMCContext?: any[] }
 
 const SYSTEM_PROMPT = `You are a specialized AI assistant powered by MedGemma representing "Salustia by Aware Doctor" on the company's website. You are designed exclusively to provide evidence-based information on traumatology and orthopedic specialties for clinicians, specialists, and multidisciplinary teams.
 
@@ -103,7 +103,7 @@ serve(async (req) => {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model, captchaToken } = (await req.json()) as AskRequest;
+    const { prompt, model, captchaToken, europePMCContext } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -215,7 +215,18 @@ serve(async (req) => {
       }
     }
 
-    const systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
+    let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
+    let userPrompt = rawPrompt;
+
+    // Add Europe PMC context if available
+    if (europePMCContext && europePMCContext.length > 0) {
+      systemContent += "\n\nContexto adicional de literatura científica reciente:";
+      europePMCContext.forEach((article: any, index: number) => {
+        systemContent += `\n${index + 1}. ${article.title} (${article.year}) - ${article.journal}\nResumen: ${article.abstract}`;
+      });
+      systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";
+    }
+
     const routerRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -226,7 +237,7 @@ serve(async (req) => {
         model: routerModel,
         messages: [
           { role: "system", content: systemContent },
-          { role: "user", content: rawPrompt },
+          { role: "user", content: userPrompt },
         ],
         temperature: 0.2,
         max_tokens: 512,

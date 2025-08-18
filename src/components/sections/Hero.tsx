@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast"
 import DOMPurify from "dompurify"
 import Turnstile from "react-turnstile"
 import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
+import { EuropePMCReferencesSection } from "@/components/references/EuropePMCReferencesSection"
 
 const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? ""
 
@@ -25,6 +26,8 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
   const [summary, setSummary] = useState<string>("")
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
   const [loadingSummary, setLoadingSummary] = useState(false)
+  const [europePMCReferences, setEuropePMCReferences] = useState<any[]>([])
+  const [keywords, setKeywords] = useState<string[]>([])
 
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
@@ -49,13 +52,36 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
     setLoading(true)
     setResponse("")
     setSummary("")
+    setEuropePMCReferences([])
+    setKeywords([])
     
     try {
+      // First, get Europe PMC references
+      let europePMCContext: any[] = [];
+      let extractedKeywords: string[] = [];
+      
+      try {
+        const { data: pmcData, error: pmcError } = await supabase.functions.invoke("europe-pmc-search", {
+          body: { prompt }
+        });
+        
+        if (!pmcError && pmcData?.articles) {
+          europePMCContext = pmcData.articles;
+          extractedKeywords = pmcData.keywords || [];
+          setEuropePMCReferences(pmcData.articles);
+          setKeywords(extractedKeywords);
+          console.log("Europe PMC context loaded:", europePMCContext.length, "articles");
+        }
+      } catch (pmcErr) {
+        console.warn("Europe PMC search failed (non-fatal):", pmcErr);
+      }
+      
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
         body: { 
           prompt, 
           model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
-          captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined 
+          captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
+          europePMCContext
         },
       })
       
@@ -267,6 +293,12 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
                     ) : null}
                   </div>
                 )}
+                
+                {/* Europe PMC References */}
+                <EuropePMCReferencesSection 
+                  articles={europePMCReferences}
+                  keywords={keywords}
+                />
               </div>
             </motion.div>
           )}
