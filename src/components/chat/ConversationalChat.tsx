@@ -42,18 +42,22 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     const used = Number(localStorage.getItem("guest_query_count") || "0")
     return Math.max(0, 3 - used)
   }, [messages])
-  // Auto scroll to top when new messages arrive
+  // Auto scroll to bottom when new messages arrive - Enhanced
   useEffect(() => {
-    const scrollToTop = () => {
-      if (chatContainerRef.current) {
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
         // Use smooth scrolling with a slight delay to ensure content is rendered
         setTimeout(() => {
-          chatContainerRef.current!.scrollTop = 0;
+          messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+            inline: "nearest"
+          })
         }, 100)
       }
     }
    
-    scrollToTop()
+    scrollToBottom()
   }, [messages, suggestions]) // Removed 'loading' from dependencies to prevent auto-scroll when AI response finishes (loading becomes false)
   // Load chat history from localStorage or database
   useEffect(() => {
