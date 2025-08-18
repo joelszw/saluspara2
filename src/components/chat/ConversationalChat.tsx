@@ -283,27 +283,12 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 timestamp={message.timestamp}
               />
             ) : (
-              <>
-                <ChatBubbleAI
-                  message={message.content}
-                  summary={message.summary}
-                  timestamp={message.timestamp}
-                  loadingSummary={loadingSummary}
-                />
-                {/* Show Europe PMC References after AI response */}
-                {message.europePMCReferences && message.europePMCReferences.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="ml-8 mb-4"
-                  >
-                    <EuropePMCReferencesSection 
-                      articles={message.europePMCReferences}
-                      keywords={message.keywords || []}
-                    />
-                  </motion.div>
-                )}
-              </>
+              <ChatBubbleAI
+                message={message.content}
+                summary={message.summary}
+                timestamp={message.timestamp}
+                loadingSummary={loadingSummary}
+              />
             )}
           </div>
         ))}
@@ -323,6 +308,22 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             onSuggestionClick={handleSuggestionClick}
             isLoading={loadingSuggestions}
           />
+        )}
+
+        {/* Show Europe PMC References at the bottom after all messages and suggestions */}
+        {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
+         messages[messages.length - 1]?.europePMCReferences && 
+         messages[messages.length - 1]?.europePMCReferences!.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <EuropePMCReferencesSection 
+              articles={messages[messages.length - 1]!.europePMCReferences!}
+              keywords={messages[messages.length - 1]?.keywords || []}
+            />
+          </motion.div>
         )}
 
         <div ref={messagesEndRef} />
