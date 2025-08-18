@@ -365,7 +365,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-[50px] max-h-[120px] resize-none"
+                className="min-h-[160px] max-h-[300px] resize-none text-base leading-relaxed"
+                rows={8}
                 disabled={loading}
               />
               
