@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "@/hooks/use-toast"
 import DOMPurify from "dompurify"
 import Turnstile from "react-turnstile"
+import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
 
 const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? ""
 
@@ -214,10 +215,9 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
               <div className="rounded-xl border bg-card p-6 text-left space-y-4">
                 <div>
                   <h3 className="font-semibold text-lg mb-3 text-primary">Respuesta Médica</h3>
-                  <div
-                    className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ 
-                      __html: DOMPurify.sanitize(
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <MedicalTermsTooltip 
+                      text={DOMPurify.sanitize(
                         response
                           .replace(/\n/g, '<br>')
                           .replace(/\*\s/g, '<br>• ')
@@ -227,9 +227,9 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
                           ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
                           ALLOWED_ATTR: ["href","title","target","rel"] 
                         }
-                      ) 
-                    }}
-                  />
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Summary section for authenticated users */}

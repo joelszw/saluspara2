@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { History, Clock, ChevronDown } from "lucide-react"
+import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
 
 interface QueryItem {
   id: string
@@ -101,12 +102,9 @@ export function UserHistory({ history }: UserHistoryProps) {
                               {query.response && (
                                 <div>
                                   <h4 className="font-semibold text-primary mb-2">Respuesta:</h4>
-                                  <div 
-                                    className="text-sm bg-card border p-4 rounded-md prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
-                                    dangerouslySetInnerHTML={{
-                                      __html: formatResponse(query.response)
-                                    }}
-                                  />
+                                  <div className="text-sm bg-card border p-4 rounded-md prose prose-sm max-w-none dark:prose-invert">
+                                    <MedicalTermsTooltip text={formatResponse(query.response)} />
+                                  </div>
                                 </div>
                               )}
 
@@ -118,12 +116,11 @@ export function UserHistory({ history }: UserHistoryProps) {
                                     </svg>
                                     Resumen Clínico
                                   </h4>
-                                  <div 
-                                    className="text-sm bg-muted/30 border rounded-md p-4 whitespace-pre-wrap"
-                                    dangerouslySetInnerHTML={{ 
-                                      __html: query.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
-                                    }}
-                                  />
+                                  <div className="text-sm bg-muted/30 border rounded-md p-4">
+                                    <MedicalTermsTooltip 
+                                      text={query.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}
+                                    />
+                                  </div>
                                 </div>
                               )}
                               
