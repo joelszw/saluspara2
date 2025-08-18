@@ -13,6 +13,7 @@ interface QueryItem {
   id: string
   prompt: string
   response: string | null
+  summary?: string | null
   timestamp: string
 }
 

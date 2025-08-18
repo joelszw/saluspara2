@@ -11,6 +11,7 @@ interface QueryItem {
   id: string
   prompt: string
   response: string | null
+  summary?: string | null
   timestamp: string
 }
 
@@ -104,6 +105,23 @@ export function UserHistory({ history }: UserHistoryProps) {
                                     className="text-sm bg-card border p-4 rounded-md prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
                                     dangerouslySetInnerHTML={{
                                       __html: formatResponse(query.response)
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {query.summary && (
+                                <div>
+                                  <h4 className="font-semibold text-success mb-2 flex items-center gap-2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Resumen Clínico
+                                  </h4>
+                                  <div 
+                                    className="text-sm bg-muted/30 border rounded-md p-4 whitespace-pre-wrap"
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: query.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
                                     }}
                                   />
                                 </div>

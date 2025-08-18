@@ -253,10 +253,14 @@ serve(async (req) => {
       user_id: userId,
       prompt: rawPrompt,
       response: generated,
-    });
+    }).select('id');
+    
+    let queryId = null;
     if (insertRes.error) {
       console.error("Error inserting query:", insertRes.error);
       // Non-fatal: continue
+    } else if (insertRes.data?.[0]) {
+      queryId = insertRes.data[0].id;
     }
 
     // Optionally update convenient counters for authenticated users
@@ -274,7 +278,7 @@ serve(async (req) => {
       }).eq("id", userId);
     }
 
-    return new Response(JSON.stringify({ response: generated }), {
+    return new Response(JSON.stringify({ response: generated, queryId }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

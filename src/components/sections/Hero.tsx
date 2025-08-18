@@ -21,7 +21,9 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
   const [prompt, setPrompt] = useState("")
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<string>("")
+  const [summary, setSummary] = useState<string>("")
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
 
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
@@ -45,6 +47,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
 
     setLoading(true)
     setResponse("")
+    setSummary("")
     
     try {
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
@@ -62,7 +65,30 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
       }
       
       const text = data?.response as string
+      const queryId = data?.queryId as string
       setResponse(text)
+
+      // Generate summary if user is authenticated and we have a query ID
+      if (userId && queryId) {
+        setLoadingSummary(true)
+        try {
+          const { data: summaryData, error: summaryError } = await supabase.functions.invoke("generate-summary", {
+            body: { 
+              queryId,
+              prompt, 
+              response: text
+            },
+          })
+          
+          if (!summaryError && summaryData?.summary) {
+            setSummary(summaryData.summary)
+          }
+        } catch (e) {
+          console.error("Error generating summary:", e)
+        } finally {
+          setLoadingSummary(false)
+        }
+      }
 
       // Update guest counter or refresh user data
       if (!userId) {
@@ -185,23 +211,57 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="rounded-xl border bg-card p-6 text-left">
-                <div
-                  className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(
-                      response
-                        .replace(/\n/g, '<br>')
-                        .replace(/\*\s/g, '<br>• ')
-                        .replace(/(\d+\.\s)/g, '<br>$1')
-                        .replace(/^\s*<br>/, ''), 
-                      { 
-                        ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
-                        ALLOWED_ATTR: ["href","title","target","rel"] 
-                      }
-                    ) 
-                  }}
-                />
+              <div className="rounded-xl border bg-card p-6 text-left space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg mb-3 text-primary">Respuesta Médica</h3>
+                  <div
+                    className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ 
+                      __html: DOMPurify.sanitize(
+                        response
+                          .replace(/\n/g, '<br>')
+                          .replace(/\*\s/g, '<br>• ')
+                          .replace(/(\d+\.\s)/g, '<br>$1')
+                          .replace(/^\s*<br>/, ''), 
+                        { 
+                          ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
+                          ALLOWED_ATTR: ["href","title","target","rel"] 
+                        }
+                      ) 
+                    }}
+                  />
+                </div>
+
+                {/* Summary section for authenticated users */}
+                {userId && (
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold text-lg mb-3 text-success flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      Resumen Clínico
+                    </h3>
+                    {loadingSummary ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
+                        Generando resumen automático...
+                      </div>
+                    ) : summary ? (
+                      <div 
+                        className="prose prose-sm max-w-none dark:prose-invert text-sm bg-muted/30 rounded-lg p-4 whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{ 
+                          __html: DOMPurify.sanitize(
+                            summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'),
+                            { 
+                              ALLOWED_TAGS: ["b","strong","i","em","u","br","p"], 
+                              ALLOWED_ATTR: [] 
+                            }
+                          ) 
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
