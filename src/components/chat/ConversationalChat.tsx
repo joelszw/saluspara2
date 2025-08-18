@@ -1,4 +1,3 @@
-typescript
 import React, { useState, useRef, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
@@ -12,7 +11,9 @@ import { ChatBubbleAI } from "./ChatBubbleAI"
 import { FollowUpSuggestions } from "./FollowUpSuggestions"
 import { ClearHistoryButton } from "./ClearHistoryButton"
 import { EuropePMCReferencesSection } from "@/components/references/EuropePMCReferencesSection"
+
 const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? ""
+
 interface ChatMessage {
   id: string
   type: 'user' | 'ai'
@@ -22,11 +23,13 @@ interface ChatMessage {
   europePMCReferences?: any[]
   keywords?: string[]
 }
+
 interface ConversationalChatProps {
   userId: string | null
   counts: { daily: number; monthly: number }
   onUsageUpdate: () => void
 }
+
 export function ConversationalChat({ userId, counts, onUsageUpdate }: ConversationalChatProps) {
   const { t } = useTranslation()
   const [prompt, setPrompt] = useState("")
@@ -38,34 +41,37 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
     return Math.max(0, 3 - used)
   }, [messages])
+
   // Auto scroll to bottom when new messages arrive - Enhanced
   useEffect(() => {
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
         // Use smooth scrolling with a slight delay to ensure content is rendered
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth", 
             block: "end",
             inline: "nearest"
           })
         }, 100)
       }
     }
-   
+    
     scrollToBottom()
-  }, [messages, suggestions]) // Removed 'loading' from dependencies to prevent auto-scroll when AI response finishes (loading becomes false)
+  }, [messages, loading, suggestions])
+
   // Load chat history from localStorage or database
   useEffect(() => {
     if (userId) {
       // For authenticated users, we could load from database if needed
       // For now, we'll use localStorage for simplicity
     }
-   
+    
     // Load from localStorage
     const savedMessages = localStorage.getItem(`chat_history_${userId || 'guest'}`)
     if (savedMessages) {
@@ -76,24 +82,26 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
     }
   }, [userId])
+
   // Save messages to localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(`chat_history_${userId || 'guest'}`, JSON.stringify(messages))
     }
   }, [messages, userId])
+
   const generateFollowUpSuggestions = async (response: string, originalPrompt: string) => {
     setLoadingSuggestions(true)
     try {
       // Generate 2-3 follow-up suggestions based on the AI response
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: {
+        body: { 
           prompt: `Basándote en esta consulta médica: "${originalPrompt}" y su respuesta: "${response.substring(0, 500)}...", genera exactamente 3 preguntas de seguimiento cortas y específicas que el usuario podría hacer. Responde SOLO con las 3 preguntas separadas por saltos de línea, sin numeración ni explicaciones adicionales.`,
           model: "meta-llama/Llama-3.3-70B-Instruct:groq",
           skipStorage: true // Don't store this in the database
         },
       })
-     
+      
       if (!error && data?.response) {
         const suggestionsText = data.response.trim()
         const suggestionsList = suggestionsText
@@ -101,7 +109,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           .filter(s => s.trim())
           .slice(0, 3)
           .map(s => s.replace(/^\d+\.\s*/, '').trim())
-       
+        
         setSuggestions(suggestionsList)
       }
     } catch (e) {
@@ -110,20 +118,23 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       setLoadingSuggestions(false)
     }
   }
+
   const handleAsk = async (customPrompt?: string) => {
     const currentPrompt = customPrompt || prompt
     if (!currentPrompt.trim()) return
+
     // Enforce guest limit
     if (!userId) {
       const used = Number(localStorage.getItem("guest_query_count") || "0")
       if (used >= 3) {
-        toast({
-          title: t('hero.limit_reached'),
+        toast({ 
+          title: t('hero.limit_reached'), 
           description: t('hero.signup_to_continue')
         })
         return
       }
     }
+
     // Add user message immediately
     const userMessage: ChatMessage = {
       id: `user_${Date.now()}`,
@@ -131,22 +142,22 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       content: currentPrompt,
       timestamp: new Date().toISOString()
     }
-   
+    
     setMessages(prev => [...prev, userMessage])
     setPrompt("") // Clear input
     setSuggestions([]) // Clear previous suggestions
     setLoading(true)
-   
+    
     try {
       // Get Europe PMC references
       let europePMCContext: any[] = [];
       let extractedKeywords: string[] = [];
-     
+      
       try {
         const { data: pmcData, error: pmcError } = await supabase.functions.invoke("europe-pmc-search", {
           body: { prompt: currentPrompt }
         });
-       
+        
         if (!pmcError && pmcData?.articles) {
           europePMCContext = pmcData.articles;
           extractedKeywords = pmcData.keywords || [];
@@ -154,25 +165,25 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       } catch (pmcErr) {
         console.warn("Europe PMC search failed (non-fatal):", pmcErr);
       }
-     
+      
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: {
-          prompt: currentPrompt,
-          model: "meta-llama/Llama-3.3-70B-Instruct:groq",
+        body: { 
+          prompt: currentPrompt, 
+          model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
           captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
           europePMCContext
         },
       })
-     
+      
       if (error) throw new Error(error.message || "Failed to get response")
       if (data?.error) {
         const details = (data as any).details ? ` — ${(data as any).details}` : ""
         throw new Error(`${data.error}${details}`)
       }
-     
+      
       const response = data?.response as string
       const queryId = data?.queryId as string
-     
+      
       // Add AI message after user message
       const aiMessage: ChatMessage = {
         id: `ai_${Date.now() + Math.random()}`,
@@ -182,23 +193,24 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         europePMCReferences: europePMCContext,
         keywords: extractedKeywords
       }
-     
+      
       setMessages(prev => [...prev, aiMessage])
+
       // Generate summary for authenticated users
       if (userId && queryId) {
         setLoadingSummary(true)
         try {
           const { data: summaryData, error: summaryError } = await supabase.functions.invoke("generate-summary", {
-            body: {
+            body: { 
               queryId,
-              prompt: currentPrompt,
+              prompt: currentPrompt, 
               response: response
             },
           })
-         
+          
           if (!summaryError && summaryData?.summary) {
-            setMessages(prev => prev.map(msg =>
-              msg.id === aiMessage.id
+            setMessages(prev => prev.map(msg => 
+              msg.id === aiMessage.id 
                 ? { ...msg, summary: summaryData.summary }
                 : msg
             ))
@@ -209,8 +221,10 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           setLoadingSummary(false)
         }
       }
+
       // Generate follow-up suggestions
       generateFollowUpSuggestions(response, currentPrompt)
+
       // Update counters
       if (!userId) {
         const used = Number(localStorage.getItem("guest_query_count") || "0")
@@ -219,9 +233,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         onUsageUpdate()
       }
     } catch (e: any) {
-      toast({
-        title: "Error",
-        description: e.message || "No se pudo obtener respuesta."
+      toast({ 
+        title: "Error", 
+        description: e.message || "No se pudo obtener respuesta." 
       })
       // Remove the user message if request failed
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id))
@@ -229,26 +243,30 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       setLoading(false)
     }
   }
+
   const handleSuggestionClick = (suggestion: string) => {
     setPrompt(suggestion)
     // Auto-submit the suggestion
     setTimeout(() => handleAsk(suggestion), 100)
   }
+
   const clearHistory = () => {
     setMessages([])
     setSuggestions([])
     localStorage.removeItem(`chat_history_${userId || 'guest'}`)
   }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleAsk()
     }
   }
+
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
       {/* Chat Messages - Improved container */}
-      <div
+      <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
         style={{ scrollBehavior: 'smooth' }}
@@ -268,15 +286,16 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             <p className="text-sm">{t('chat.welcome_subtitle')}</p>
           </motion.div>
         )}
+
         {messages.map((message, index) => (
-          <motion.div
+          <motion.div 
             key={message.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
             {message.type === 'user' ? (
-              <ChatBubbleUser
+              <ChatBubbleUser 
                 message={message.content}
                 timestamp={message.timestamp}
               />
@@ -290,6 +309,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             )}
           </motion.div>
         ))}
+
         {loading && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -303,6 +323,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             />
           </motion.div>
         )}
+
         {/* Follow-up suggestions */}
         {suggestions.length > 0 && !loading && (
           <motion.div
@@ -317,23 +338,26 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             />
           </motion.div>
         )}
+
         {/* Show Europe PMC References at the bottom after all messages and suggestions */}
-        {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' &&
-         messages[messages.length - 1]?.europePMCReferences &&
+        {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
+         messages[messages.length - 1]?.europePMCReferences && 
          messages[messages.length - 1]?.europePMCReferences!.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-4"
           >
-            <EuropePMCReferencesSection
+            <EuropePMCReferencesSection 
               articles={messages[messages.length - 1]!.europePMCReferences!}
               keywords={messages[messages.length - 1]?.keywords || []}
             />
           </motion.div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
+
       {/* Input Area - Sticky with improved backdrop */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t px-4 py-4 shadow-lg">
         <div className="flex flex-col gap-3">
@@ -346,11 +370,12 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 <span>{t('hero.guest_remaining', { count: guestRemaining })}</span>
               )}
             </div>
-           
+            
             {messages.length > 0 && (
               <ClearHistoryButton onClear={clearHistory} disabled={loading} />
             )}
           </div>
+
           {/* Input */}
           <div className="flex flex-col gap-3">
             {!userId && TURNSTILE_SITE_KEY && (
@@ -363,7 +388,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 />
               </div>
             )}
-           
+            
             <div className="flex gap-2">
               <Textarea
                 placeholder={t('hero.placeholder')}
@@ -374,7 +399,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 rows={6}
                 disabled={loading}
               />
-             
+              
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-primary to-success hover:from-primary/90 hover:to-success/90 text-white border-0 min-w-[100px]"
