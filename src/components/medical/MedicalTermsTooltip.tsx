@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 // Extended medical terms dictionary for traumatology and orthopedics
@@ -199,8 +199,8 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
     setHoveredTerm(null)
   }
 
-  // Function to highlight medical terms in text
-  const highlightMedicalTerms = (inputText: string) => {
+  // Function to highlight medical terms in text and collect references
+  const processText = (inputText: string) => {
     let highlightedText = inputText
     const processedTerms = new Set<string>()
     const references = new Set<string>()
@@ -249,11 +249,16 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
       })
     })
     
-    // Update references state
-    setUsedReferences(references)
-    
-    return highlightedText
+    return { highlightedText, references }
   }
+
+  // Process text and memoize the result
+  const processedContent = useMemo(() => processText(text), [text])
+
+  // Update references when content changes
+  useEffect(() => {
+    setUsedReferences(processedContent.references)
+  }, [processedContent.references])
 
   // Add event listeners for dynamically created spans
   useEffect(() => {
@@ -293,7 +298,7 @@ export function MedicalTermsTooltip({ text }: MedicalTermsTooltipProps) {
     <div className="relative">
       <div 
         dangerouslySetInnerHTML={{ 
-          __html: highlightMedicalTerms(text) 
+          __html: processedContent.highlightedText 
         }} 
       />
       
