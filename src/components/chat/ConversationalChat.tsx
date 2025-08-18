@@ -165,21 +165,45 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         console.warn("Europe PMC search failed (non-fatal):", pmcErr);
       }
       
-     const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-      body: {
-        prompt: currentPrompt,
-        model: "meta-llama/Llama-3.3-70B-Instruct:groq",
-        captchaToken: guestCaptchaToken,        // siempre lo incluyes, dejará undefined si es null
-        europePMCContext: europePMCContext     // asegúrate de pasar el array, incluso si está vacío
-      },
-    })
-console.log("ask-medgemma response data:", data, "error:", error);
-      
-      if (error) throw new Error(error.message || "Failed to get response")
-      if (data?.error) {
-        const details = (data as any).details ? ` — ${(data as any).details}` : ""
-        throw new Error(`${data.error}${details}`)
-      }
+      // URL base de tu función edge
+const url = `https://injvwmsqinrcthgdlvux.supabase.co/functions/v1/ask-medgemma`;
+
+// Llamada con fetch para poder leer el body aunque sea 500
+const res = await fetch(url, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    apikey: supabase.getAuth().apiKey,         // tu anon key
+    Authorization: supabase.auth.session()?.access_token
+      ? `Bearer ${supabase.auth.session()?.access_token}`
+      : undefined,
+  },
+  body: JSON.stringify({
+    prompt: currentPrompt,
+    model: "meta-llama/Llama-3.3-70B-Instruct:groq",
+    captchaToken: guestCaptchaToken,
+    europePMCContext
+  })
+});
+
+const payload = await res.json()
+  .catch(() => ({ error: "No JSON en la respuesta" }));
+
+console.log("raw ask-medgemma fetch response:", res.status, payload);
+
+if (!res.ok) {
+  // arroja con detalles del body
+  throw new Error(
+    payload.error
+      ? `${payload.error}${payload.details ? ` — ${payload.details}` : ""}`
+      : `HTTP ${res.status}`
+  );
+}
+
+// Si OK, payload.response contiene la respuesta
+const response = payload.response as string;
+const queryId = payload.queryId;
+
       
       const response = data?.response as string
       const queryId = data?.queryId as string
