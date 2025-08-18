@@ -165,14 +165,15 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         console.warn("Europe PMC search failed (non-fatal):", pmcErr);
       }
       
-      const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: { 
-          prompt: currentPrompt, 
-          model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
-          captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
-          europePMCContext
-        },
-      })
+     const { data, error } = await supabase.functions.invoke("ask-medgemma", {
+      body: {
+        prompt: currentPrompt,
+        model: "meta-llama/Llama-3.3-70B-Instruct:groq",
+        captchaToken: guestCaptchaToken,        // siempre lo incluyes, dejará undefined si es null
+        europePMCContext: europePMCContext     // asegúrate de pasar el array, incluso si está vacío
+      },
+    })
+
       
       if (error) throw new Error(error.message || "Failed to get response")
       if (data?.error) {
