@@ -354,7 +354,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </motion.div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesStartRef} />
       </div>
 
       {/* Input Area - Sticky with improved backdrop */}
