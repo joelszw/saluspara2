@@ -173,7 +173,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         europePMCContext: europePMCContext     // asegúrate de pasar el array, incluso si está vacío
       },
     })
-
+console.log("ask-medgemma response data:", data, "error:", error);
       
       if (error) throw new Error(error.message || "Failed to get response")
       if (data?.error) {
