@@ -19,6 +19,13 @@ const resources = {
       "hero.consulting": "Consultando…",
       "hero.guest_remaining": "Consultas restantes como invitado: {{count}} / 3",
       "hero.daily_monthly": "Hoy: {{daily}}/3 • Mes: {{monthly}}/20 (Plan gratuito)",
+      "hero.limit_reached": "Límite alcanzado",
+      "hero.signup_to_continue": "Regístrate o inicia sesión gratis para seguir usando.",
+      
+      // Chat Section
+      "chat.welcome_title": "¡Hola! Soy tu asistente médico IA",
+      "chat.welcome_subtitle": "Pregúntame sobre síntomas, medicamentos, procedimientos y más.",
+      "chat.clear_history": "Limpiar historial",
       
       // Features Section
       "features.title": "¿Por qué elegir Salustia?",
@@ -88,6 +95,13 @@ const resources = {
       "hero.consulting": "Consulting…",
       "hero.guest_remaining": "Remaining guest queries: {{count}} / 3",
       "hero.daily_monthly": "Today: {{daily}}/3 • Month: {{monthly}}/20 (Free plan)",
+      "hero.limit_reached": "Limit reached",
+      "hero.signup_to_continue": "Sign up or sign in for free to continue using.",
+      
+      // Chat Section
+      "chat.welcome_title": "Hello! I'm your medical AI assistant",
+      "chat.welcome_subtitle": "Ask me about symptoms, medications, procedures and more.",
+      "chat.clear_history": "Clear history",
       
       // Features Section
       "features.title": "Why choose Salustia?",

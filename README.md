@@ -6,13 +6,17 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 
 ## 🚀 Características
 
-- **IA Médica Especializada**: Respuestas precisas en traumatología y ortopedia
-- **Referencias Científicas**: Búsqueda automática en Europe PMC con artículos de los últimos 3 años  
+- **Chat Conversacional**: Interfaz dinámica tipo Aware.Doctor IA con burbujas de chat
+- **Sugerencias de Seguimiento**: 2-3 preguntas generadas automáticamente por IA después de cada respuesta
+- **IA Médica Especializada**: Respuestas precisas en traumatología y ortopedia  
+- **Referencias Científicas**: Búsqueda automática en Europe PMC con artículos de los últimos 3 años
+- **Resúmenes Clínicos**: Generación automática de resúmenes para usuarios autenticados
 - **Traducción Automática**: Traduce consultas de español a inglés para búsquedas más efectivas
 - **Extracción de Palabras Clave**: Identifica términos médicos relevantes automáticamente
+- **Historial Persistente**: Conversaciones guardadas en localStorage/servidor
 - **Sistema de Créditos**: Control de uso con planes freemium (INTACTO - NO modificar)
-- **Multiidioma**: Soporte completo ES/EN
-- **Dark Mode**: Tema oscuro por defecto con toggle
+- **Multiidioma**: Soporte completo ES/EN con react-i18next
+- **Dark Mode**: Tema oscuro por defecto con paleta médica profesional
 - **Responsive**: Diseño optimizado para todos los dispositivos
 
 ## 🛠️ Stack Tecnológico
@@ -24,6 +28,31 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 - **Referencias**: Europe PMC API
 - **i18n**: react-i18next
 
+## 💬 Arquitectura de Chat Conversacional
+
+### Componentes de Chat
+
+- **ChatBubbleUser**: Mensajes del usuario (derecha, verde)
+- **ChatBubbleAI**: Respuestas IA con ícono médico y resumen clínico
+- **FollowUpSuggestions**: Botones clickeables de sugerencias de seguimiento
+- **ClearHistoryButton**: Botón para limpiar historial de conversación
+- **ConversationalChat**: Contenedor principal con input persistente (sticky)
+
+### Flujo Conversacional
+
+1. **Usuario escribe** → mensaje aparece en burbuja derecha verde
+2. **IA procesa** → respuesta aparece en burbuja izquierda con contexto Europe PMC
+3. **Generación de sugerencias** → 2-3 preguntas de seguimiento aparecen como botones
+4. **Auto-scroll** → desplazamiento automático a nuevos mensajes
+5. **Input limpieza** → campo se vacía después de enviar
+
+### Funcionalidades Avanzadas
+
+- **Historial persistente**: localStorage para invitados, base de datos para usuarios
+- **Animaciones suaves**: Framer Motion para fade/slide-in de mensajes
+- **Responsivo**: Scroll y input optimizados para móvil
+- **Accesibilidad**: ARIA labels, contraste AA, navegación por teclado
+
 ## 📚 Europe PMC Integration
 
 ### Flujo de Búsqueda de Referencias
@@ -32,7 +61,7 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 2. **Extracción**: Identificación de 3-5 palabras clave médicas  
 3. **Búsqueda**: Query a Europe PMC con filtros temporales (últimos 3 años)
 4. **Contexto**: Artículos incluidos automáticamente en el prompt de MedGemma
-5. **Display**: Sección expandible con referencias citadas
+5. **Display**: Sección expandible con referencias citadas integrada en cada respuesta
 
 ### Personalización Europe PMC
 
@@ -67,6 +96,31 @@ const fromYear = currentYear - 3; // Actual: últimos 3 años
 - **Tablas de usuarios**: Schema actual - INTACTO
 - **Edge Functions existentes**: ask-medgemma preservado
 
+## 🎨 Paleta de Colores Médica
+
+- **Primary**: `#55FF61` (verde brillante) - Botones principales y acciones
+- **Success**: `#129524` (verde oscuro) - Estados exitosos y confirmaciones  
+- **Secondary**: `#0BF4FF` (cian) - Elementos secundarios
+- **Info**: `#006FB9` (azul) - Información contextual
+- **Accent**: `#3E9DE1` (azul claro) - Acentos y highlights
+- **Background Dark**: `#151516` (casi negro) - Fondo principal modo oscuro
+- **Card Dark**: `#282828` (gris oscuro) - Tarjetas en modo oscuro
+
+## 🧪 Tests Críticos
+
+### Funcionalidad Preservada
+1. **Autenticación**: Login/signup funcionan sin cambios
+2. **Contador de Créditos**: Sistema de uso disminuye correctamente
+3. **Llamadas Server-side**: Sin llamadas directas a Hugging Face desde navegador
+4. **Scroll automático**: Funciona en móvil y desktop
+5. **Input clearing**: Se vacía después de enviar mensajes
+
+### Performance y UX
+- **Auto-scroll suave** a nuevos mensajes
+- **Animaciones optimizadas** con `will-change`
+- **Carga lazy** de referencias Europe PMC
+- **Re-renders eficientes** con React.memo
+
 ## ⚠️ Importantes Salvaguardas
 
 - **NO** modificar autenticación/registro existente
@@ -75,6 +129,7 @@ const fromYear = currentYear - 3; // Actual: últimos 3 años
 - **NO** cambiar nombres de tablas sin autorización
 - **MANTENER** todos los endpoints server-side existentes
 - **USAR** solo el design system para colores/estilos
+- **PRESERVAR** flujo de MedGemma y Europe PMC existente
 
 ## How can I edit this code?
 
