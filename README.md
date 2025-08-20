@@ -1,6 +1,6 @@
 # Salustia - Medical AI Assistant
 
-Asistente médico especializado en traumatología y ortopedia con integración a Europe PMC para referencias científicas actualizadas.
+Asistente médico especializado en traumatología y ortopedia con integración a PubMed para referencias científicas actualizadas.
 
 **URL**: https://lovable.dev/projects/9baa9f83-e7e2-41c4-99b1-1d9cc5a03258
 
@@ -9,7 +9,7 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 - **Chat Conversacional**: Interfaz dinámica tipo Aware.Doctor IA con burbujas de chat
 - **Sugerencias de Seguimiento**: 2-3 preguntas generadas automáticamente por IA después de cada respuesta
 - **IA Médica Especializada**: Respuestas precisas en traumatología y ortopedia  
-- **Referencias Científicas**: Búsqueda automática en Europe PMC con artículos de los últimos 3 años
+- **Referencias Científicas**: Búsqueda automática en PubMed con artículos de los últimos 3 años
 - **Resúmenes Clínicos**: Generación automática de resúmenes para usuarios autenticados
 - **Traducción Automática**: Traduce consultas de español a inglés para búsquedas más efectivas
 - **Extracción de Palabras Clave**: Identifica términos médicos relevantes automáticamente
@@ -25,7 +25,7 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 - **Styling**: Tailwind CSS + Framer Motion
 - **Backend**: Supabase + Edge Functions
 - **IA**: Hugging Face (MedGemma, Llama 3.3)
-- **Referencias**: Europe PMC API
+- **Referencias**: PubMed API
 - **i18n**: react-i18next
 
 ## 💬 Arquitectura de Chat Conversacional
@@ -41,7 +41,7 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 ### Flujo Conversacional
 
 1. **Usuario escribe** → mensaje aparece en burbuja derecha verde
-2. **IA procesa** → respuesta aparece en burbuja izquierda con contexto Europe PMC
+2. **IA procesa** → respuesta aparece en burbuja izquierda con contexto PubMed
 3. **Generación de sugerencias** → 2-3 preguntas de seguimiento aparecen como botones
 4. **Auto-scroll** → desplazamiento automático a nuevos mensajes
 5. **Input limpieza** → campo se vacía después de enviar
@@ -53,37 +53,46 @@ Asistente médico especializado en traumatología y ortopedia con integración a
 - **Responsivo**: Scroll y input optimizados para móvil
 - **Accesibilidad**: ARIA labels, contraste AA, navegación por teclado
 
-## 📚 Europe PMC Integration
+## 📚 PubMed Integration
 
 ### Flujo de Búsqueda de Referencias
 
-1. **Traducción**: Consulta del usuario (ES) → Inglés usando HuggingFace
-2. **Extracción**: Identificación de 3-5 palabras clave médicas  
-3. **Búsqueda**: Query a Europe PMC con filtros temporales (últimos 3 años)
+1. **Traducción**: Consulta del usuario (ES) → Inglés usando Helsinki-NLP/opus-mt-es-en
+2. **Extracción**: Identificación de 4-5 palabras clave médicas usando modelos HuggingFace
+3. **Búsqueda**: Query a PubMed con filtros temporales (últimos 3 años)
 4. **Contexto**: Artículos incluidos automáticamente en el prompt de MedGemma
 5. **Display**: Sección expandible con referencias citadas integrada en cada respuesta
 
-### Personalización Europe PMC
+### Personalización PubMed
 
 #### Modificar Modelo de Traducción
-En `supabase/functions/europe-pmc-search/index.ts`:
+En `supabase/functions/pubmed-search/index.ts`:
 ```typescript
-// Cambiar el modelo de traducción si es necesario
-model: "meta-llama/Llama-3.3-70B-Instruct:groq" // Actual
+// Cambiar el modelo de traducción
+const result = await hf.translation({
+  model: 'Helsinki-NLP/opus-mt-es-en', // Cambiar aquí para otro modelo
+  inputs: spanishText,
+})
 ```
 
-#### Ajustar Query Europe PMC
+#### Modificar Extracción de Keywords
 ```typescript
-const searchUrl = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&resultType=core&format=json&fromDate=${fromYear}-01-01&toDate=${currentYear}-12-31&pageSize=5`;
+// Personalizar el prompt de extracción
+const prompt = `Extract 4-5 important medical keywords from this text for PubMed search. Return only the keywords separated by commas, no explanations: "${text}"`
+```
+
+#### Ajustar Query PubMed
+```typescript
+const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&mindate=${minYear}/01/01&maxdate=${currentYear}/12/31&retmax=10&retmode=json`
 
 // Filtros adicionales disponibles:
-// &source=MED para solo PubMed  
-// &journalTitle="Nature" para revista específica
+// &field=title para buscar solo en títulos
+// &journal="Nature" para revista específica
 ```
 
 #### Filtros Temporales
 ```typescript
-const fromYear = currentYear - 3; // Actual: últimos 3 años
+const minYear = currentYear - 3; // Actual: últimos 3 años
 // Cambiar a currentYear - 5 para expandir a 5 años
 ```
 
@@ -118,7 +127,7 @@ const fromYear = currentYear - 3; // Actual: últimos 3 años
 ### Performance y UX
 - **Auto-scroll suave** a nuevos mensajes
 - **Animaciones optimizadas** con `will-change`
-- **Carga lazy** de referencias Europe PMC
+- **Carga lazy** de referencias PubMed
 - **Re-renders eficientes** con React.memo
 
 ## ⚠️ Importantes Salvaguardas
@@ -129,7 +138,7 @@ const fromYear = currentYear - 3; // Actual: últimos 3 años
 - **NO** cambiar nombres de tablas sin autorización
 - **MANTENER** todos los endpoints server-side existentes
 - **USAR** solo el design system para colores/estilos
-- **PRESERVAR** flujo de MedGemma y Europe PMC existente
+- **PRESERVAR** flujo de MedGemma y PubMed existente
 
 ## How can I edit this code?
 

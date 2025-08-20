@@ -63,12 +63,13 @@ const resources = {
       "auth.google": "Google",
       "auth.forgot_password": "¿Olvidaste tu contraseña?",
       
-      // References Section
-      "references.title": "Referencias utilizadas",
-      "references.expand": "Ver referencias ({{count}})",
-      "references.collapse": "Ocultar referencias",
-      "references.disclaimer.title": "Aviso importante:",
-      "references.disclaimer.text": "Referencias para contrastar; no diagnóstico oficial. Siempre consulte con literatura especializada y colegas para decisiones clínicas.",
+      // PubMed References Section
+      "pubmed.title": "Referencias PubMed utilizadas",
+      "pubmed.expand": "Ver referencias ({{count}})",
+      "pubmed.collapse": "Ocultar referencias",
+      "pubmed.translated_query": "Consulta traducida",
+      "pubmed.disclaimer.title": "Aviso importante:",
+      "pubmed.disclaimer.text": "Referencias para contrastar; no diagnóstico oficial. Siempre consulte con literatura especializada y colegas para decisiones clínicas.",
 
       // Footer
       "footer.legal": "Aviso legal",
@@ -139,12 +140,13 @@ const resources = {
       "auth.google": "Google",
       "auth.forgot_password": "Forgot your password?",
       
-      // References Section
-      "references.title": "References used",
-      "references.expand": "View references ({{count}})",
-      "references.collapse": "Hide references",
-      "references.disclaimer.title": "Important notice:",
-      "references.disclaimer.text": "References for contrast; not official diagnosis. Always consult specialized literature and colleagues for clinical decisions.",
+      // PubMed References Section
+      "pubmed.title": "PubMed references used",
+      "pubmed.expand": "View references ({{count}})",
+      "pubmed.collapse": "Hide references",
+      "pubmed.translated_query": "Translated query",
+      "pubmed.disclaimer.title": "Important notice:",
+      "pubmed.disclaimer.text": "References for contrast; not official diagnosis. Always consult specialized literature and colleagues for clinical decisions.",
 
       // Footer
       "footer.legal": "Legal notice",

@@ -22,7 +22,7 @@ function getCorsHeaders(req: Request) {
   } as const;
 }
 
-interface AskRequest { prompt: string; model?: string; captchaToken?: string; europePMCContext?: any[] }
+interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[] }
 
 // Security: PII detection patterns for medical data
 const PII_PATTERNS = [
@@ -160,7 +160,7 @@ serve(async (req) => {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model, captchaToken, europePMCContext } = (await req.json()) as AskRequest;
+    const { prompt, model, captchaToken, pubmedContext } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -315,10 +315,10 @@ serve(async (req) => {
     let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
     let userPrompt = rawPrompt;
 
-    // Add Europe PMC context if available
-    if (europePMCContext && europePMCContext.length > 0) {
-      systemContent += "\n\nContexto adicional de literatura científica reciente:";
-      europePMCContext.forEach((article: any, index: number) => {
+    // Add PubMed context if available
+    if (pubmedContext && pubmedContext.length > 0) {
+      systemContent += "\n\nContexto adicional de literatura científica reciente de PubMed:";
+      pubmedContext.forEach((article: any, index: number) => {
         systemContent += `\n${index + 1}. ${article.title} (${article.year}) - ${article.journal}\nResumen: ${article.abstract}`;
       });
       systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";

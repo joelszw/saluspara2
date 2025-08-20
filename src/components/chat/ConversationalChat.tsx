@@ -10,7 +10,7 @@ import { ChatBubbleUser } from "./ChatBubbleUser"
 import { ChatBubbleAI } from "./ChatBubbleAI"
 import { FollowUpSuggestions } from "./FollowUpSuggestions"
 import { ClearHistoryButton } from "./ClearHistoryButton"
-import { EuropePMCReferencesSection } from "@/components/references/EuropePMCReferencesSection"
+import { PubMedReferencesSection } from "@/components/references/PubMedReferencesSection"
 
 const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? ""
 
@@ -20,8 +20,9 @@ interface ChatMessage {
   content: string
   summary?: string
   timestamp: string
-  europePMCReferences?: any[]
+  pubmedReferences?: any[]
   keywords?: string[]
+  translatedQuery?: string
 }
 
 interface ConversationalChatProps {
@@ -148,21 +149,23 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     setLoading(true)
     
     try {
-      // Get Europe PMC references
-      let europePMCContext: any[] = [];
+      // Get PubMed references
+      let pubmedContext: any[] = [];
       let extractedKeywords: string[] = [];
+      let translatedQuery: string = '';
       
       try {
-        const { data: pmcData, error: pmcError } = await supabase.functions.invoke("europe-pmc-search", {
+        const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke("pubmed-search", {
           body: { prompt: currentPrompt }
         });
         
-        if (!pmcError && pmcData?.articles) {
-          europePMCContext = pmcData.articles;
-          extractedKeywords = pmcData.keywords || [];
+        if (!pubmedError && pubmedData?.articles) {
+          pubmedContext = pubmedData.articles;
+          extractedKeywords = pubmedData.keywords || [];
+          translatedQuery = pubmedData.translatedQuery || '';
         }
-      } catch (pmcErr) {
-        console.warn("Europe PMC search failed (non-fatal):", pmcErr);
+      } catch (pubmedErr) {
+        console.warn("PubMed search failed (non-fatal):", pubmedErr);
       }
       
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
@@ -170,7 +173,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           prompt: currentPrompt, 
           model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
           captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
-          europePMCContext
+          pubmedContext
         },
       })
       
@@ -189,8 +192,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         type: 'ai',
         content: response,
         timestamp: new Date().toISOString(),
-        europePMCReferences: europePMCContext,
-        keywords: extractedKeywords
+        pubmedReferences: pubmedContext,
+        keywords: extractedKeywords,
+        translatedQuery: translatedQuery
       }
       
       setMessages(prev => [...prev, aiMessage])
@@ -339,18 +343,19 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </motion.div>
         )}
 
-        {/* Show Europe PMC References at the bottom after all messages and suggestions */}
+        {/* Show PubMed References at the bottom after all messages and suggestions */}
         {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
-         messages[messages.length - 1]?.europePMCReferences && 
-         messages[messages.length - 1]?.europePMCReferences!.length > 0 && (
+         messages[messages.length - 1]?.pubmedReferences && 
+         messages[messages.length - 1]?.pubmedReferences!.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-4"
           >
-            <EuropePMCReferencesSection 
-              articles={messages[messages.length - 1]!.europePMCReferences!}
+            <PubMedReferencesSection 
+              articles={messages[messages.length - 1]!.pubmedReferences!}
               keywords={messages[messages.length - 1]?.keywords || []}
+              translatedQuery={messages[messages.length - 1]?.translatedQuery}
             />
           </motion.div>
         )}

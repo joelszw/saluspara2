@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-interface EuropePMCArticle {
+interface PubMedArticle {
   id: string;
   title: string;
   authors: string;
@@ -15,16 +15,19 @@ interface EuropePMCArticle {
   url: string;
   year: string;
   journal: string;
+  pmid: string;
 }
 
-interface EuropePMCReferencesSectionProps {
-  articles: EuropePMCArticle[];
+interface PubMedReferencesSectionProps {
+  articles: PubMedArticle[];
   keywords?: string[];
+  translatedQuery?: string;
 }
 
-export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProps> = ({
+export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = ({
   articles,
-  keywords = []
+  keywords = [],
+  translatedQuery
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
@@ -47,7 +50,7 @@ export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProp
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">
-              {t("references.title")}
+              {t("pubmed.title")}
             </h3>
             {keywords.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
@@ -57,6 +60,11 @@ export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProp
                   </Badge>
                 ))}
               </div>
+            )}
+            {translatedQuery && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("pubmed.translated_query")}: {translatedQuery}
+              </p>
             )}
           </div>
         </div>
@@ -69,12 +77,12 @@ export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProp
           {isExpanded ? (
             <>
               <ChevronUp className="h-4 w-4 mr-1" />
-              {t("references.collapse")}
+              {t("pubmed.collapse")}
             </>
           ) : (
             <>
               <ChevronDown className="h-4 w-4 mr-1" />
-              {t("references.expand", { count: articles.length })}
+              {t("pubmed.expand", { count: articles.length })}
             </>
           )}
         </Button>
@@ -122,6 +130,9 @@ export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProp
                           <Calendar className="h-3 w-3" />
                           <span>{article.year}</span>
                         </div>
+                        <div className="text-xs">
+                          <span className="font-mono">PMID: {article.pmid}</span>
+                        </div>
                       </div>
 
                       <p className="text-xs text-muted-foreground leading-relaxed">
@@ -148,8 +159,8 @@ export const EuropePMCReferencesSection: React.FC<EuropePMCReferencesSectionProp
               transition={{ delay: articles.length * 0.1 + 0.2 }}
               className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md border-l-4 border-info"
             >
-              <p className="font-medium mb-1">{t("references.disclaimer.title")}</p>
-              <p>{t("references.disclaimer.text")}</p>
+              <p className="font-medium mb-1">{t("pubmed.disclaimer.title")}</p>
+              <p>{t("pubmed.disclaimer.text")}</p>
             </motion.div>
           </motion.div>
         )}
