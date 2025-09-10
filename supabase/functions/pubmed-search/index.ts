@@ -115,15 +115,23 @@ function getAdvancedMedicalKeywords(text: string): string[] {
     }
   });
   
-  // Extract Latin/medical terms (words ending in common medical suffixes)
-  const latinSuffixes = ['itis', 'osis', 'oma', 'ia', 'us', 'um', 'al', 'ic'];
+  // Extract Latin/medical terms (words ending in common medical suffixes) - PRESERVE ACCENTS
+  const latinSuffixes = ['itis', 'osis', 'ósis', 'oma', 'ia', 'us', 'um', 'al', 'ic'];
   const words = originalText.split(/\s+/);
   words.forEach(word => {
-    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+    // FIXED: Use regex that preserves accented characters
+    const cleanWord = word.replace(/[^\w\u00C0-\u017F]/g, ''); // Keep accented characters
+    console.log(`EXTRACTION DEBUG: "${word}" -> cleaned: "${cleanWord}"`);
+    
     if (cleanWord.length > 4) {
       latinSuffixes.forEach(suffix => {
-        if (cleanWord.endsWith(suffix)) {
-          extractedKeywords.add(cleanWord);
+        // Check both original and normalized versions for suffix matching
+        const normalizedWord = cleanWord.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const normalizedSuffix = suffix.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        if (cleanWord.toLowerCase().endsWith(suffix) || normalizedWord.endsWith(normalizedSuffix)) {
+          console.log(`SUFFIX MATCH: "${cleanWord}" matches suffix "${suffix}"`);
+          extractedKeywords.add(cleanWord); // Add original word with accents
         }
       });
     }
