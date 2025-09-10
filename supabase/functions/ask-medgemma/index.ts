@@ -320,7 +320,7 @@ serve(async (req) => {
     let userPrompt = rawPrompt;
 
     // Call PubMed search if enabled
-    let pubmedContext = '';
+    let pubmedSearchContext = '';
     let pubmedReferences = [];
     try {
       console.log('Calling PubMed search for enhanced context...');
@@ -332,7 +332,7 @@ serve(async (req) => {
         const { articles, keywords, translatedQuery } = pubmedResponse.data;
         if (articles && articles.length > 0) {
           console.log(`Found ${articles.length} PubMed articles for keywords: ${keywords?.join(', ')}`);
-          pubmedContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
+          pubmedSearchContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
             `${index + 1}. ${article.title} (${article.year}) - ${article.abstract?.substring(0, 150) || 'Sin resumen disponible'}...`
           ).join('\n')}`;
           pubmedReferences = articles;
@@ -345,8 +345,8 @@ serve(async (req) => {
     }
 
     // Add PubMed context to system prompt
-    if (pubmedContext) {
-      systemContent += pubmedContext;
+    if (pubmedSearchContext) {
+      systemContent += pubmedSearchContext;
       systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";
     }
 
