@@ -38,54 +38,145 @@ async function translateToEnglish(spanishText: string, hf: HfInference): Promise
 }
 
 async function extractKeywords(text: string, hf: HfInference): Promise<string[]> {
+  console.log('Starting keyword extraction for:', text);
+  
+  // First try AI-based extraction with a more stable model
   try {
-    console.log('Extracting keywords from:', text);
-    
-    // Use a more appropriate model for medical keyword extraction
-    const result = await hf.textGeneration({
-      model: 'microsoft/BioGPT-Large',
-      inputs: `Medical keywords from: "${text}"\nKeywords:`,
-      parameters: {
-        max_new_tokens: 30,
-        temperature: 0.1,
-        do_sample: false,
-      },
+    console.log('Attempting AI keyword extraction...');
+    const result = await hf.textClassification({
+      model: 'microsoft/DialoGPT-medium',
+      inputs: text,
     });
     
-    console.log('Raw keyword extraction result:', result);
+    console.log('AI extraction result:', result);
     
-    if (result && typeof result === 'object' && 'generated_text' in result) {
-      const keywords = result.generated_text
-        .replace(`Medical keywords from: "${text}"\nKeywords:`, '')
-        .split(/[,\n]/)
-        .map(k => k.trim())
-        .filter(k => k.length > 2 && k.length < 30 && !k.includes(':'))
-        .slice(0, 5);
+    if (result && Array.isArray(result) && result.length > 0) {
+      const aiKeywords = result
+        .map(item => item.label)
+        .filter(label => label && label.length > 2)
+        .slice(0, 3);
       
-      console.log('Extracted keywords:', keywords);
-      return keywords.length > 0 ? keywords : getBasicMedicalKeywords(text);
+      if (aiKeywords.length > 0) {
+        console.log('AI keywords found:', aiKeywords);
+        return [...aiKeywords, ...getAdvancedMedicalKeywords(text)].slice(0, 5);
+      }
     }
-    
-    return getBasicMedicalKeywords(text);
   } catch (error) {
-    console.warn('Keyword extraction failed:', error);
+    console.warn('AI keyword extraction failed:', error);
+  }
+  
+  // Fallback to advanced rule-based extraction
+  console.log('Using advanced rule-based keyword extraction...');
+  return getAdvancedMedicalKeywords(text);
+}
+
+function getAdvancedMedicalKeywords(text: string): string[] {
+  console.log('Extracting advanced medical keywords from:', text);
+  
+  const lowerText = text.toLowerCase();
+  const originalText = text;
+  
+  // Comprehensive medical terminology dictionary
+  const medicalTerms = {
+    // Orthopedic specific terms
+    orthopedic: ['hallux', 'valgus', 'abductus', 'bunion', 'metatarsal', 'phalanx', 'osteotomy', 'arthrodesis', 'arthroplasty'],
+    // Surgical approaches
+    surgical: ['mis', 'minimally invasive', 'percutaneous', 'open', 'arthroscopic', 'endoscopic', 'laparoscopic'],
+    // General medical terms
+    anatomy: ['bone', 'joint', 'ligament', 'tendon', 'cartilage', 'muscle', 'nerve', 'artery', 'vein'],
+    pathology: ['fracture', 'rupture', 'tear', 'sprain', 'strain', 'inflammation', 'infection', 'deformity'],
+    treatment: ['surgery', 'rehabilitation', 'therapy', 'treatment', 'management', 'protocol', 'technique']
+  };
+  
+  const extractedKeywords = new Set<string>();
+  
+  // Extract medical terms from all categories
+  Object.values(medicalTerms).flat().forEach(term => {
+    if (lowerText.includes(term.toLowerCase())) {
+      extractedKeywords.add(term);
+    }
+  });
+  
+  // Extract capitalized medical terms (likely proper nouns or technical terms)
+  const capitalizedTerms = originalText.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
+  capitalizedTerms.forEach(term => {
+    if (term.length > 3 && term.length < 20) {
+      extractedKeywords.add(term);
+    }
+  });
+  
+  // Extract terms with specific patterns (medical abbreviations)
+  const abbreviations = originalText.match(/\b[A-Z]{2,5}\b/g) || [];
+  abbreviations.forEach(abbr => {
+    if (abbr.length >= 2 && abbr.length <= 5) {
+      extractedKeywords.add(abbr);
+    }
+  });
+  
+  // Extract Latin/medical terms (words ending in common medical suffixes)
+  const latinSuffixes = ['itis', 'osis', 'oma', 'ia', 'us', 'um', 'al', 'ic'];
+  const words = originalText.split(/\s+/);
+  words.forEach(word => {
+    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+    if (cleanWord.length > 4) {
+      latinSuffixes.forEach(suffix => {
+        if (cleanWord.endsWith(suffix)) {
+          extractedKeywords.add(cleanWord);
+        }
+      });
+    }
+  });
+  
+  // Convert to array and prioritize
+  const keywordArray = Array.from(extractedKeywords);
+  
+  // Prioritize orthopedic terms if found
+  const orthopedicTerms = keywordArray.filter(kw => 
+    medicalTerms.orthopedic.some(term => kw.toLowerCase().includes(term.toLowerCase()))
+  );
+  
+  // Prioritize surgical terms
+  const surgicalTerms = keywordArray.filter(kw => 
+    medicalTerms.surgical.some(term => kw.toLowerCase().includes(term.toLowerCase()))
+  );
+  
+  // Build final keyword list with prioritization
+  const finalKeywords = [
+    ...orthopedicTerms,
+    ...surgicalTerms,
+    ...keywordArray.filter(kw => !orthopedicTerms.includes(kw) && !surgicalTerms.includes(kw))
+  ].slice(0, 5);
+  
+  console.log('Advanced extraction results:', {
+    foundTerms: keywordArray,
+    orthopedicTerms,
+    surgicalTerms,
+    finalKeywords
+  });
+  
+  // Fallback to basic terms if nothing found
+  if (finalKeywords.length === 0) {
+    console.log('No specific terms found, using fallback keywords');
     return getBasicMedicalKeywords(text);
   }
+  
+  return finalKeywords;
 }
 
 function getBasicMedicalKeywords(text: string): string[] {
-  // Extract basic medical keywords from common terms
-  const medicalTerms = [
+  // Enhanced basic medical keywords
+  const basicTerms = [
     'fractura', 'dolor', 'lesion', 'tratamiento', 'cirugia', 'rehabilitacion',
     'fracture', 'pain', 'injury', 'treatment', 'surgery', 'rehabilitation',
-    'ortopedia', 'traumatologia', 'orthopedic', 'trauma', 'bone', 'joint'
+    'ortopedia', 'traumatologia', 'orthopedic', 'trauma', 'bone', 'joint',
+    'medical', 'clinical', 'diagnosis', 'therapy', 'patient'
   ];
   
-  const foundTerms = medicalTerms.filter(term => 
+  const foundTerms = basicTerms.filter(term => 
     text.toLowerCase().includes(term.toLowerCase())
   ).slice(0, 3);
   
-  return foundTerms.length > 0 ? [...foundTerms, 'medical', 'treatment'] : ['medical', 'treatment', 'diagnosis'];
+  return foundTerms.length > 0 ? foundTerms : ['orthopedic', 'surgery', 'treatment'];
 }
 
 async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
