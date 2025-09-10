@@ -383,7 +383,10 @@ async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArtic
     
   } catch (error) {
     console.error('PubMed search error:', error)
-    return []
+    return {
+      articles: [],
+      searchType: 'AND' as const
+    }
   }
 }
 
