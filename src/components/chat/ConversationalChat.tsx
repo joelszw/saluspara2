@@ -25,6 +25,7 @@ interface ChatMessage {
   translatedQuery?: string
   searchType?: 'AND' | 'OR'
   selectedKeyword?: string
+  canContinue?: boolean
 }
 
 interface ConversationalChatProps {
@@ -44,16 +45,16 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
   const messagesStartRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
     return Math.max(0, 3 - used)
   }, [messages])
 
-  // Auto scroll to bottom when new messages arrive - Enhanced
+  // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     const scrollToTop = () => {
       if (messagesStartRef.current) {
-        // Use smooth scrolling with a slight delay to ensure content is rendered
         setTimeout(() => {
           messagesStartRef.current?.scrollIntoView({ 
             behavior: "smooth", 
@@ -67,14 +68,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     scrollToTop()
   }, [messages, loading, suggestions])
 
-  // Load chat history from localStorage or database
+  // Load chat history from localStorage
   useEffect(() => {
-    if (userId) {
-      // For authenticated users, we could load from database if needed
-      // For now, we'll use localStorage for simplicity
-    }
-    
-    // Load from localStorage
     const savedMessages = localStorage.getItem(`chat_history_${userId || 'guest'}`)
     if (savedMessages) {
       try {
@@ -96,12 +91,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     console.log("🤖 STARTING suggestion generation for prompt:", originalPrompt.substring(0, 100))
     setLoadingSuggestions(true)
     try {
-      // Generate 2-3 follow-up suggestions based on the AI response
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
         body: { 
           prompt: `Basándote en esta respuesta: "${response.substring(0, 200)}..." sugiere 3 preguntas de seguimiento cortas sobre traumatología. Una por línea, sin números.`,
           model: "meta-llama/Llama-3.3-70B-Instruct:groq",
-          skipStorage: true // Don't store this in the database
+          skipStorage: true
         },
       })
       
@@ -135,57 +129,68 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     }
   }
 
-  const handleAsk = async (customPrompt?: string) => {
-    const currentPrompt = customPrompt || prompt
-    if (!currentPrompt.trim()) return
+  const handleAsk = async (inputPrompt?: string, isContinuation = false, previousMessageIndex?: number) => {
+    const currentPrompt = inputPrompt || prompt.trim()
+    if (!currentPrompt && !isContinuation) return
 
-    // Enforce guest limit
-    if (!userId) {
-      const used = Number(localStorage.getItem("guest_query_count") || "0")
-      if (used >= 3) {
-        toast({ 
-          title: t('hero.limit_reached'), 
-          description: t('hero.signup_to_continue')
-        })
-        return
-      }
-    }
+    // Get the previous response if this is a continuation
+    const previousResponse = isContinuation && previousMessageIndex !== undefined 
+      ? messages[previousMessageIndex]?.content 
+      : undefined
 
-    // Add user message immediately
-    const userMessage: ChatMessage = {
-      id: `user_${Date.now()}`,
-      type: 'user',
-      content: currentPrompt,
-      timestamp: new Date().toISOString()
-    }
-    
-    setMessages(prev => [...prev, userMessage])
-    setPrompt("") // Clear input
-    setSuggestions([]) // Clear previous suggestions
     setLoading(true)
+    setSuggestions([])
+
+    // Add user message only if this is not a continuation
+    let userMessage: ChatMessage | undefined
+    if (!isContinuation) {
+      // Enforce guest limit
+      if (!userId) {
+        const used = Number(localStorage.getItem("guest_query_count") || "0")
+        if (used >= 3) {
+          toast({ 
+            title: t('hero.limit_reached'), 
+            description: t('hero.signup_to_continue')
+          })
+          setLoading(false)
+          return
+        }
+      }
+
+      userMessage = {
+        id: `user_${Date.now()}`,
+        type: 'user',
+        content: currentPrompt,
+        timestamp: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, userMessage])
+      setPrompt("")
+    }
     
     try {
-      // Get PubMed references
+      // Get PubMed references only for new queries (not continuations)
       let pubmedContext: any[] = [];
       let extractedKeywords: string[] = [];
       let translatedQuery: string = '';
       let searchType: 'AND' | 'OR' | undefined = undefined;
       let selectedKeyword: string | undefined = undefined;
       
-      try {
-        const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke("pubmed-search", {
-          body: { prompt: currentPrompt }
-        });
-        
-        if (!pubmedError && pubmedData?.articles) {
-          pubmedContext = pubmedData.articles;
-          extractedKeywords = pubmedData.keywords || [];
-          translatedQuery = pubmedData.translatedQuery || '';
-          searchType = pubmedData.searchType;
-          selectedKeyword = pubmedData.selectedKeyword;
+      if (!isContinuation) {
+        try {
+          const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke("pubmed-search", {
+            body: { prompt: currentPrompt }
+          });
+          
+          if (!pubmedError && pubmedData?.articles) {
+            pubmedContext = pubmedData.articles;
+            extractedKeywords = pubmedData.keywords || [];
+            translatedQuery = pubmedData.translatedQuery || '';
+            searchType = pubmedData.searchType;
+            selectedKeyword = pubmedData.selectedKeyword;
+          }
+        } catch (pubmedErr) {
+          console.warn("PubMed search failed (non-fatal):", pubmedErr);
         }
-      } catch (pubmedErr) {
-        console.warn("PubMed search failed (non-fatal):", pubmedErr);
       }
       
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
@@ -193,7 +198,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           prompt: currentPrompt, 
           model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
           captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
-          pubmedContext
+          pubmedContext,
+          continueResponse: isContinuation,
+          previousResponse: previousResponse
         },
       })
       
@@ -206,23 +213,34 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       const response = data?.response as string
       const queryId = data?.queryId as string
       
-      // Add AI message after user message
+      // Create or update AI message
       const aiMessage: ChatMessage = {
-        id: `ai_${Date.now() + Math.random()}`,
+        id: isContinuation && previousMessageIndex !== undefined ? messages[previousMessageIndex].id : `ai_${Date.now() + Math.random()}`,
         type: 'ai',
-        content: response,
+        content: isContinuation && previousMessageIndex !== undefined 
+          ? messages[previousMessageIndex].content + ' ' + response 
+          : response,
         timestamp: new Date().toISOString(),
-        pubmedReferences: pubmedContext,
+        pubmedReferences: isContinuation ? [] : pubmedContext,
         keywords: extractedKeywords,
         translatedQuery: translatedQuery,
         searchType: searchType,
-        selectedKeyword: selectedKeyword
+        selectedKeyword: selectedKeyword,
+        canContinue: data?.canContinue
       }
-      
-      setMessages(prev => [...prev, aiMessage])
+
+      if (isContinuation && previousMessageIndex !== undefined) {
+        // Update the existing AI message with the continued content
+        setMessages(prev => prev.map((msg, index) => 
+          index === previousMessageIndex ? aiMessage : msg
+        ))
+      } else {
+        // Add new AI message
+        setMessages(prev => [...prev, aiMessage])
+      }
 
       // Generate summary for authenticated users
-      if (userId && queryId) {
+      if (userId && queryId && !isContinuation) {
         setLoadingSummary(true)
         try {
           const { data: summaryData, error: summaryError } = await supabase.functions.invoke("generate-summary", {
@@ -247,8 +265,10 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         }
       }
 
-      // Generate follow-up suggestions
-      generateFollowUpSuggestions(response, currentPrompt)
+      // Generate follow-up suggestions only for new responses (not continuations)
+      if (!isContinuation) {
+        await generateFollowUpSuggestions(response, currentPrompt)
+      }
 
       // Update counters
       if (!userId) {
@@ -262,23 +282,33 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         title: "Error", 
         description: e.message || "No se pudo obtener respuesta." 
       })
-      // Remove the user message if request failed
-      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id))
+      // Remove the user message if request failed and it was added
+      if (userMessage) {
+        setMessages(prev => prev.filter(msg => msg.id !== userMessage.id))
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setPrompt(suggestion)
-    // Auto-submit the suggestion
-    setTimeout(() => handleAsk(suggestion), 100)
+  const handleContinueResponse = async (messageIndex: number) => {
+    const message = messages[messageIndex]
+    if (message?.type === 'ai') {
+      // Find the original user prompt for this AI response
+      const userPrompt = messageIndex > 0 ? messages[messageIndex - 1]?.content : prompt
+      await handleAsk(userPrompt, true, messageIndex)
+    }
   }
 
   const clearHistory = () => {
     setMessages([])
     setSuggestions([])
     localStorage.removeItem(`chat_history_${userId || 'guest'}`)
+  }
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setPrompt(suggestion)
+    setTimeout(() => handleAsk(suggestion), 100)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -290,13 +320,14 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
-      {/* Chat Messages - Improved container */}
+      {/* Chat Messages */}
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-h-[65vh] min-h-[400px] scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent scroll-smooth"
         style={{ scrollBehavior: 'smooth' }}
       >
-             <div ref={messagesStartRef} />
+        <div ref={messagesStartRef} />
+        
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -326,27 +357,44 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                 timestamp={message.timestamp}
               />
             ) : (
-              <ChatBubbleAI
-                message={message.content}
-                summary={message.summary}
-                timestamp={message.timestamp}
-                loadingSummary={loadingSummary}
-              />
+              <>
+                <ChatBubbleAI
+                  message={message.content}
+                  summary={message.summary}
+                  timestamp={message.timestamp}
+                  loadingSummary={loadingSummary}
+                />
+                {message.canContinue && !loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2"
+                  >
+                    <Button
+                      onClick={() => handleContinueResponse(index)}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      {t('continueResponse', 'Continuar respuesta')}
+                    </Button>
+                  </motion.div>
+                )}
+              </>
             )}
           </motion.div>
         ))}
-
+        
         {loading && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center"
           >
-            <ChatBubbleAI
-              message=""
-              timestamp={new Date().toISOString()}
-              isLoading={true}
-            />
+            <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <span className="text-sm">{t('thinking', 'Pensando...')}</span>
+            </div>
           </motion.div>
         )}
 
@@ -384,11 +432,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
             />
           </motion.div>
         )}
-
-   
       </div>
 
-      {/* Input Area - Sticky with improved backdrop */}
+      {/* Input Area */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t px-4 py-4 shadow-lg">
         <div className="flex flex-col gap-3">
           {/* Controls */}

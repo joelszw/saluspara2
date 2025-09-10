@@ -22,7 +22,7 @@ function getCorsHeaders(req: Request) {
   } as const;
 }
 
-interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[]; skipStorage?: boolean }
+interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[]; skipStorage?: boolean; continueResponse?: boolean; previousResponse?: string }
 
 // Security: PII detection patterns for medical data
 const PII_PATTERNS = [
@@ -160,7 +160,7 @@ serve(async (req) => {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model, captchaToken, pubmedContext, skipStorage } = (await req.json()) as AskRequest;
+    const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -169,7 +169,7 @@ serve(async (req) => {
       });
     }
     // Enforce a maximum length before calling the model
-    const MAX_PROMPT_CHARS = 2000;
+    const MAX_PROMPT_CHARS = 1200;
     if (rawPrompt.length > MAX_PROMPT_CHARS) {
       return new Response(JSON.stringify({ error: `El prompt excede el límite de ${MAX_PROMPT_CHARS} caracteres.` }), {
         status: 400,
@@ -319,35 +319,41 @@ serve(async (req) => {
     let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
     let userPrompt = rawPrompt;
 
-    // Call PubMed search if enabled
-    let pubmedSearchContext = '';
-    let pubmedReferences = [];
-    try {
-      console.log('Calling PubMed search for enhanced context...');
-      const pubmedResponse = await supabase.functions.invoke('pubmed-search', {
-        body: { prompt: rawPrompt }
-      });
-      
-      if (pubmedResponse.data && !pubmedResponse.error) {
-        const { articles, keywords, translatedQuery } = pubmedResponse.data;
-        if (articles && articles.length > 0) {
-          console.log(`Found ${articles.length} PubMed articles for keywords: ${keywords?.join(', ')}`);
-          pubmedSearchContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
-            `${index + 1}. ${article.title} (${article.year}) - ${article.abstract?.substring(0, 150) || 'Sin resumen disponible'}...`
-          ).join('\n')}`;
-          pubmedReferences = articles;
+    // Handle continuation of previous response
+    if (continueResponse && previousResponse) {
+      systemContent += " Continúa la respuesta anterior donde se quedó, manteniendo el mismo contexto y nivel de detalle.";
+      userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-200)}..." para la pregunta original: "${rawPrompt}"`;
+    } else {
+      // Call PubMed search only for new queries (not continuations)
+      let pubmedSearchContext = '';
+      let pubmedReferences = [];
+      try {
+        console.log('Calling PubMed search for enhanced context...');
+        const pubmedResponse = await supabase.functions.invoke('pubmed-search', {
+          body: { prompt: rawPrompt }
+        });
+        
+        if (pubmedResponse.data && !pubmedResponse.error) {
+          const { articles, keywords, translatedQuery } = pubmedResponse.data;
+          if (articles && articles.length > 0) {
+            console.log(`Found ${articles.length} PubMed articles for keywords: ${keywords?.join(', ')}`);
+            pubmedSearchContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
+              `${index + 1}. ${article.title} (${article.year}) - ${article.abstract?.substring(0, 150) || 'Sin resumen disponible'}...`
+            ).join('\n')}`;
+            pubmedReferences = articles;
+          }
+        } else {
+          console.warn('PubMed search returned error:', pubmedResponse.error);
         }
-      } else {
-        console.warn('PubMed search returned error:', pubmedResponse.error);
+      } catch (pubmedError) {
+        console.warn('PubMed search failed, continuing without references:', pubmedError.message);
       }
-    } catch (pubmedError) {
-      console.warn('PubMed search failed, continuing without references:', pubmedError.message);
-    }
 
-    // Add PubMed context to system prompt
-    if (pubmedSearchContext) {
-      systemContent += pubmedSearchContext;
-      systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";
+      // Add PubMed context to system prompt
+      if (pubmedSearchContext) {
+        systemContent += pubmedSearchContext;
+        systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";
+      }
     }
 
     const routerRes = await fetch("https://router.huggingface.co/v1/chat/completions", {
@@ -417,7 +423,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       response: generated, 
       queryId,
-      pubmedReferences: pubmedReferences || []
+      pubmedReferences: continueResponse ? [] : (pubmedReferences || []), // Don't return references for continuations
+      canContinue: generated.length >= 450 // Suggest continuation if response is substantial
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
