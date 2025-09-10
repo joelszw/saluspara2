@@ -172,22 +172,28 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     let score = 0;
     const lowerKeyword = keyword.toLowerCase();
     
-    // Specific pathologies (highest priority)
-    const pathologies = ['exóstosis', 'exostosis', 'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis'];
+    // Expanded pathologies list with orthographic variations (HIGHEST PRIORITY)
+    const pathologies = [
+      'exóstosis', 'exostosis', 'exostósis', // All variations of exostosis
+      'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis',
+      'morton', 'capsulitis', 'tendinitis', 'tendinosis',
+      'plantar fasciitis', 'morton neuroma', 'hallux valgus',
+      'bunion', 'hammer toe', 'claw toe', 'mallet toe'
+    ];
     if (pathologies.some(path => lowerKeyword.includes(path))) {
-      score += 10;
+      score += 15; // Increased from 10 to 15
     }
     
-    // Specific anatomy
+    // Specific anatomy (reduced priority)
     const anatomy = ['interdigital', 'plantar', 'dorsal', 'medial', 'lateral', 'proximal', 'distal'];
     if (anatomy.some(anat => lowerKeyword.includes(anat))) {
-      score += 8;
+      score += 6; // Reduced from 8 to 6
     }
     
     // Specific procedures
     const procedures = ['osteotomy', 'arthrodesis', 'arthroplasty', 'resection', 'excision'];
     if (procedures.some(proc => lowerKeyword.includes(proc))) {
-      score += 6;
+      score += 8; // Slightly increased
     }
     
     // Technical terms
@@ -203,17 +209,23 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     }
     
     // Bonus for longer, more specific terms
-    if (keyword.length > 6) {
+    if (keyword.length > 8) {
+      score += 3; // Increased bonus for longer terms
+    } else if (keyword.length > 6) {
       score += 2;
     }
     
-    // Bonus for Latin/medical endings
-    const medicalEndings = ['osis', 'itis', 'oma', 'ia', 'us', 'um'];
-    if (medicalEndings.some(ending => lowerKeyword.endsWith(ending))) {
-      score += 3;
+    // Enhanced bonus for Latin/medical endings with special emphasis on '-osis'
+    if (lowerKeyword.endsWith('osis') || lowerKeyword.endsWith('ósis')) {
+      score += 5; // Special bonus for '-osis' endings (exóstosis benefit)
+    } else {
+      const medicalEndings = ['itis', 'oma', 'ia', 'us', 'um'];
+      if (medicalEndings.some(ending => lowerKeyword.endsWith(ending))) {
+        score += 3;
+      }
     }
     
-    console.log(`Keyword "${keyword}" scored: ${score}`);
+    console.log(`Keyword "${keyword}" scored: ${score} (pathology: ${pathologies.some(path => lowerKeyword.includes(path))}, anatomy: ${anatomy.some(anat => lowerKeyword.includes(anat))}, procedure: ${procedures.some(proc => lowerKeyword.includes(proc))})`);
     return { keyword, score };
   });
   
@@ -221,7 +233,11 @@ function selectMostSpecificKeyword(keywords: string[]): string {
   const sortedKeywords = scoredKeywords.sort((a, b) => b.score - a.score);
   const selectedKeyword = sortedKeywords[0]?.keyword || keywords[0];
   
-  console.log('Selected keyword for OR search:', selectedKeyword, 'with score:', sortedKeywords[0]?.score);
+  console.log('=== KEYWORD SELECTION RESULTS ===');
+  console.log('All scored keywords:', sortedKeywords.map(k => `${k.keyword}: ${k.score}`));
+  console.log('Selected keyword for OR search:', selectedKeyword, 'with final score:', sortedKeywords[0]?.score);
+  console.log('==================================');
+  
   return selectedKeyword;
 }
 
