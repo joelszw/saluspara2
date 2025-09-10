@@ -66,8 +66,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
     }
     
-    scrollToTop()
-  }, [messages, loading, suggestions])
+    // Don't scroll when loading is in progress (to prevent jumping during continuations)
+    if (!loading) {
+      scrollToTop()
+    }
+  }, [messages, suggestions])
 
   // Load chat history from localStorage
   useEffect(() => {
@@ -465,10 +468,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </motion.div>
         )}
 
-        {/* Show PubMed References first */}
+        {/* Show PubMed References first - only for original messages, not continuations */}
         {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
          messages[messages.length - 1]?.pubmedReferences && 
-         messages[messages.length - 1]?.pubmedReferences!.length > 0 && (
+         messages[messages.length - 1]?.pubmedReferences!.length > 0 && 
+         messages[messages.length - 1]?.originalLength === undefined && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
