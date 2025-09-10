@@ -193,21 +193,32 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         }
       }
       
+      console.log('Calling ask-medgemma function...', { 
+        isContinuation,
+        userId: !!userId,
+        skipStorage: !userId
+      });
+      
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
         body: { 
           prompt: currentPrompt, 
-          model: "meta-llama/Llama-3.3-70B-Instruct:groq", 
           captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
           pubmedContext,
+          skipStorage: !userId,
           continueResponse: isContinuation,
           previousResponse: previousResponse
         },
       })
       
-      if (error) throw new Error(error.message || "Failed to get response")
+      if (error) {
+        console.error('Edge function error:', error);
+        const errorMessage = error.message || error.toString();
+        throw new Error(`Error ${errorMessage.includes('202') ? '202' : ''}: ${errorMessage}`);
+      }
       if (data?.error) {
-        const details = (data as any).details ? ` — ${(data as any).details}` : ""
-        throw new Error(`${data.error}${details}`)
+        console.error('Response error:', data);
+        const details = (data as any).details ? ` — ${(data as any).details}` : "";
+        throw new Error(`${data.error}${details}`);
       }
       
       const response = data?.response as string
@@ -278,13 +289,20 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         onUsageUpdate()
       }
     } catch (e: any) {
+      console.error("Error in handleAsk:", e);
+      const errorMessage = e.message || "No se pudo obtener respuesta";
+      console.error("Detailed error info:", { error: e, errorMessage });
+      
       toast({ 
         title: "Error", 
-        description: e.message || "No se pudo obtener respuesta." 
-      })
+        description: errorMessage.includes('Error 202') 
+          ? "Error 202: Problema de conectividad. Por favor, inténtalo de nuevo." 
+          : errorMessage
+      });
+      
       // Remove the user message if request failed and it was added
       if (userMessage) {
-        setMessages(prev => prev.filter(msg => msg.id !== userMessage.id))
+        setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
       }
     } finally {
       setLoading(false)

@@ -319,14 +319,16 @@ serve(async (req) => {
     let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
     let userPrompt = rawPrompt;
 
+    // Initialize variables for PubMed search
+    let pubmedSearchContext = '';
+    let pubmedReferences = [];
+
     // Handle continuation of previous response
     if (continueResponse && previousResponse) {
       systemContent += " Continúa la respuesta anterior donde se quedó, manteniendo el mismo contexto y nivel de detalle.";
       userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-200)}..." para la pregunta original: "${rawPrompt}"`;
     } else {
       // Call PubMed search only for new queries (not continuations)
-      let pubmedSearchContext = '';
-      let pubmedReferences = [];
       try {
         console.log('Calling PubMed search for enhanced context...');
         const pubmedResponse = await supabase.functions.invoke('pubmed-search', {
@@ -388,9 +390,9 @@ serve(async (req) => {
       generated = typeof data === "string" ? data : JSON.stringify(data);
     }
 
-    // Save query (authenticated or anonymous with null user_id) - only if not skipping storage
+    // Save query (authenticated or anonymous with null user_id) - only if not skipping storage and not continuing
     let queryId = null;
-    if (!skipStorage) {
+    if (!skipStorage && !continueResponse) {
       const insertRes = await supabase.from("queries").insert({
         user_id: userId,
         prompt: rawPrompt,
@@ -403,6 +405,8 @@ serve(async (req) => {
       } else if (insertRes.data?.[0]) {
         queryId = insertRes.data[0].id;
       }
+    } else if (continueResponse) {
+      console.log("Skipping query storage for continuation response");
     }
 
     // Optionally update convenient counters for authenticated users (only if we saved the query)
