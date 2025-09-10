@@ -22,12 +22,16 @@ interface PubMedReferencesSectionProps {
   articles: PubMedArticle[];
   keywords?: string[];
   translatedQuery?: string;
+  searchType?: 'AND' | 'OR';
+  selectedKeyword?: string;
 }
 
 export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = ({
   articles,
   keywords = [],
-  translatedQuery
+  translatedQuery,
+  searchType,
+  selectedKeyword
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
@@ -52,7 +56,20 @@ export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = (
             <h3 className="text-lg font-semibold text-foreground">
               {t("pubmed.title")}
             </h3>
-            {keywords.length > 0 && (
+            {searchType === 'OR' && selectedKeyword ? (
+              <div className="flex flex-wrap gap-2 items-center mt-1">
+                <span className="text-xs text-muted-foreground">Búsqueda ampliada con:</span>
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700 font-bold"
+                >
+                  🎯 {selectedKeyword}
+                </Badge>
+                <span className="text-xs text-muted-foreground italic">
+                  (Se amplió la búsqueda usando la palabra clave más específica)
+                </span>
+              </div>
+            ) : keywords.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {keywords.map((keyword, index) => (
                   <Badge key={index} variant="secondary" className="text-xs">

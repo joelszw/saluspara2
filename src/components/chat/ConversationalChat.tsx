@@ -23,6 +23,8 @@ interface ChatMessage {
   pubmedReferences?: any[]
   keywords?: string[]
   translatedQuery?: string
+  searchType?: 'AND' | 'OR'
+  selectedKeyword?: string
 }
 
 interface ConversationalChatProps {
@@ -153,6 +155,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       let pubmedContext: any[] = [];
       let extractedKeywords: string[] = [];
       let translatedQuery: string = '';
+      let searchType: 'AND' | 'OR' | undefined = undefined;
+      let selectedKeyword: string | undefined = undefined;
       
       try {
         const { data: pubmedData, error: pubmedError } = await supabase.functions.invoke("pubmed-search", {
@@ -163,6 +167,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           pubmedContext = pubmedData.articles;
           extractedKeywords = pubmedData.keywords || [];
           translatedQuery = pubmedData.translatedQuery || '';
+          searchType = pubmedData.searchType;
+          selectedKeyword = pubmedData.selectedKeyword;
         }
       } catch (pubmedErr) {
         console.warn("PubMed search failed (non-fatal):", pubmedErr);
@@ -194,7 +200,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         timestamp: new Date().toISOString(),
         pubmedReferences: pubmedContext,
         keywords: extractedKeywords,
-        translatedQuery: translatedQuery
+        translatedQuery: translatedQuery,
+        searchType: searchType,
+        selectedKeyword: selectedKeyword
       }
       
       setMessages(prev => [...prev, aiMessage])
@@ -356,6 +364,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
               articles={messages[messages.length - 1]!.pubmedReferences!}
               keywords={messages[messages.length - 1]?.keywords || []}
               translatedQuery={messages[messages.length - 1]?.translatedQuery}
+              searchType={messages[messages.length - 1]?.searchType}
+              selectedKeyword={messages[messages.length - 1]?.selectedKeyword}
             />
           </motion.div>
         )}

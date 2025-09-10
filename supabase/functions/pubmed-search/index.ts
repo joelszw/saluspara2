@@ -22,6 +22,8 @@ interface PubMedSearchResult {
   articles: PubMedArticle[]
   keywords: string[]
   translatedQuery: string
+  searchType: 'AND' | 'OR'
+  selectedKeyword?: string
 }
 
 async function translateToEnglish(spanishText: string, hf: HfInference): Promise<string> {
@@ -239,7 +241,7 @@ function getBasicMedicalKeywords(text: string): string[] {
   return foundTerms.length > 0 ? foundTerms : ['orthopedic', 'surgery', 'treatment'];
 }
 
-async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
+async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArticle[]; searchType: 'AND' | 'OR'; selectedKeyword?: string }> {
   try {
     const currentYear = new Date().getFullYear()
     const minYear = currentYear - 3
@@ -309,6 +311,13 @@ async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
             
             allArticles = [...allArticles, ...newArticles]
             console.log(`Combined results: ${allArticles.length} unique articles (${newArticles.length} new from OR search)`)
+            
+            // Return with OR search type and selected keyword
+            return {
+              articles: allArticles,
+              searchType: 'OR' as const,
+              selectedKeyword: mostSpecificKeyword
+            }
           }
         }
       }
@@ -320,7 +329,11 @@ async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
       console.log(`Final result: ${allArticles.length} PubMed articles`)
     }
     
-    return allArticles
+    // Return with AND search type (either sufficient results or no OR search needed)
+    return {
+      articles: allArticles,
+      searchType: 'AND' as const
+    }
     
   } catch (error) {
     console.error('PubMed search error:', error)
@@ -422,12 +435,14 @@ serve(async (req) => {
     console.log('Extracted keywords:', keywords)
 
     // Step 3: Search PubMed with keywords
-    const articles = await searchPubMed(keywords)
+    const searchResult = await searchPubMed(keywords)
 
     const result: PubMedSearchResult = {
-      articles,
+      articles: searchResult.articles,
       keywords,
-      translatedQuery
+      translatedQuery,
+      searchType: searchResult.searchType,
+      selectedKeyword: searchResult.selectedKeyword
     }
 
     return new Response(JSON.stringify(result), {
