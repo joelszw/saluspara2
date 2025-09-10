@@ -180,12 +180,20 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     
     console.log(`DEBUG: Analyzing keyword "${keyword}" -> normalized: "${normalizedKeyword}"`);
     
-    // Expanded pathologies list with ALL possible variations
+    // BILINGUAL pathologies list - Spanish and English variations
     const pathologies = [
-      'exostosis', 'exstosis', // Base forms without accents
+      // Exostosis variations (Spanish + English)
+      'exostosis', 'exostósis', 'exóstosis', 'exstosis', 'exostoses',
+      // Common foot pathologies (both languages)
       'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis',
-      'morton', 'capsulitis', 'tendinitis', 'tendinosis',
-      'bunion', 'hammertoe', 'clawtoe', 'mallettoe'
+      'morton', 'capsulitis', 'tendinitis', 'tendinosis', 'tendinopatía',
+      'bunion', 'juanete', 'hammertoe', 'clawtoe', 'mallettoe',
+      'plantar', 'fascitis', 'neuromatosis', 'sesamoiditis',
+      'osteomielitis', 'osteomyelitis', 'artritis', 'arthritis',
+      'sinovitis', 'synovitis', 'condromalacia', 'chondromalacia',
+      // Additional pathology terms
+      'tumor', 'quiste', 'cyst', 'lesion', 'lesión', 'fractura', 'fracture',
+      'deformidad', 'deformity', 'espolón', 'spur', 'calcáneo', 'calcaneal'
     ];
     
     const isPathology = pathologies.some(path => {
