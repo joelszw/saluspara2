@@ -165,6 +165,21 @@ function getAdvancedMedicalKeywords(text: string): string[] {
   return finalKeywords;
 }
 
+// Helper function to normalize Spanish medical terms to English for PubMed
+function normalizeForPubMed(keyword: string): string {
+  const spanishToEnglishMap: { [key: string]: string } = {
+    'exóstosis': 'exostosis',
+    'exostósis': 'exostosis',
+    'exostosis': 'exostosis',
+    'tratamiento': 'treatment',
+    'cirugía': 'surgery',
+    'cirugia': 'surgery'
+  };
+  
+  const normalized = keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return spanishToEnglishMap[normalized] || keyword;
+}
+
 function selectMostSpecificKeyword(keywords: string[]): string {
   console.log('Selecting most specific keyword from:', keywords);
   
@@ -172,18 +187,32 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     let score = 0;
     const lowerKeyword = keyword.toLowerCase();
     
-    // ENHANCED pathology detection - normalized text to catch all variations
-    const normalizedKeyword = lowerKeyword
+    // ENHANCED pathology detection with proper Spanish-English normalization
+    let normalizedKeyword = lowerKeyword
       .normalize('NFD') // Decompose accents
       .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
       .replace(/[^a-z]/g, ''); // Keep only letters
     
+    // Special mapping for Spanish medical terms to correct English equivalents
+    const spanishToEnglishMap: { [key: string]: string } = {
+      'exostosis': 'exostosis',
+      'exostósis': 'exostosis', 
+      'exóstosis': 'exostosis'
+    };
+    
+    // Apply mapping if the original keyword matches
+    const originalNormalized = keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+    if (spanishToEnglishMap[originalNormalized]) {
+      normalizedKeyword = spanishToEnglishMap[originalNormalized];
+      console.log(`DEBUG: Mapped "${keyword}" -> "${normalizedKeyword}" (Spanish to English)`);
+    }
+    
     console.log(`DEBUG: Analyzing keyword "${keyword}" -> normalized: "${normalizedKeyword}"`);
     
-    // BILINGUAL pathologies list - Spanish and English variations
+    // BILINGUAL pathologies list - Spanish and English variations (FIXED: removed incorrect "exstosis")
     const pathologies = [
-      // Exostosis variations (Spanish + English)
-      'exostosis', 'exostósis', 'exóstosis', 'exstosis', 'exostoses',
+      // Exostosis variations (Spanish + English) - CORRECTED
+      'exostosis', 'exostósis', 'exóstosis', 'exostoses',
       // Common foot pathologies (both languages)
       'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis',
       'morton', 'capsulitis', 'tendinitis', 'tendinosis', 'tendinopatía',
@@ -266,9 +295,15 @@ function selectMostSpecificKeyword(keywords: string[]): string {
   console.log('=== KEYWORD SELECTION RESULTS ===');
   console.log('All scored keywords:', sortedKeywords.map(k => `${k.keyword}: ${k.score}`));
   console.log('Selected keyword for OR search:', selectedKeyword, 'with final score:', sortedKeywords[0]?.score);
+  
+  // Normalize the selected keyword for PubMed search
+  const normalizedForPubMed = normalizeForPubMed(selectedKeyword);
+  if (normalizedForPubMed !== selectedKeyword) {
+    console.log(`NORMALIZED for PubMed: "${selectedKeyword}" -> "${normalizedForPubMed}"`);
+  }
   console.log('==================================');
   
-  return selectedKeyword;
+  return normalizedForPubMed;
 }
 
 function getBasicMedicalKeywords(text: string): string[] {
