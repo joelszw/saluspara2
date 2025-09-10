@@ -204,7 +204,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       
       const requestBody = { 
         prompt: currentPrompt, 
-        captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
+        captchaToken: (!userId && !isContinuation) ? guestCaptchaToken ?? undefined : undefined,
         pubmedContext,
         skipStorage: !userId,
         continueResponse: isContinuation,
@@ -225,9 +225,16 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           message: error.message,
           stack: error.stack,
           toString: error.toString(),
-          type: typeof error
+          type: typeof error,
+          isContinuation
         });
         const errorMessage = error.message || error.toString();
+        
+        // Handle specific continuation errors
+        if (isContinuation && errorMessage.includes('400')) {
+          throw new Error('Error al continuar la respuesta. Por favor, inicia una nueva consulta.');
+        }
+        
         throw new Error(`Error de función: ${errorMessage}`);
       }
       if (data?.error) {
@@ -339,6 +346,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
       
       if (userPrompt) {
+        console.log('Continuing response for message:', messageIndex, 'with prompt:', userPrompt.substring(0, 50) + '...');
+        // For continuations, don't require new captcha validation
         await handleAsk(userPrompt, true, messageIndex, message.content);
       } else {
         toast({

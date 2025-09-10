@@ -239,7 +239,8 @@ serve(async (req) => {
     }
 
     // If unauthenticated, require Turnstile captcha verification and apply IP rate limiting
-    if (!userId) {
+    // Skip captcha validation for continuation requests
+    if (!userId && !continueResponse) {
       // Security: Apply IP-based rate limiting for anonymous users
       if (!checkIPRateLimit(clientIP)) {
         logSecurityEvent("IP_RATE_LIMIT_EXCEEDED", {
@@ -285,6 +286,19 @@ serve(async (req) => {
         });
         return new Response(JSON.stringify({ error: "Captcha inválido." }), {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (!userId && continueResponse) {
+      console.log('Skipping captcha validation for continuation request');
+      // For continuation requests, only apply basic rate limiting
+      if (!checkIPRateLimit(clientIP)) {
+        logSecurityEvent("IP_RATE_LIMIT_EXCEEDED_CONTINUATION", {
+          ip: clientIP,
+          promptLength: rawPrompt.length
+        });
+        return new Response(JSON.stringify({ error: "Demasiadas solicitudes desde esta dirección IP. Intente de nuevo en unos minutos." }), {
+          status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
