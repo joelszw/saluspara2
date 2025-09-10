@@ -93,6 +93,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   }, [messages, userId])
 
   const generateFollowUpSuggestions = async (response: string, originalPrompt: string) => {
+    console.log("🤖 STARTING suggestion generation for prompt:", originalPrompt.substring(0, 100))
     setLoadingSuggestions(true)
     try {
       // Generate 2-3 follow-up suggestions based on the AI response
@@ -104,18 +105,31 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         },
       })
       
-      if (!error && data?.response) {
-        const suggestionsText = data.response.trim()
-        const suggestionsList = suggestionsText
-          .split('\n')
-          .filter(s => s.trim())
-          .slice(0, 3)
-          .map(s => s.replace(/^\d+\.\s*/, '').trim())
-        
-        setSuggestions(suggestionsList)
+      console.log("🤖 Suggestion generation response:", { error, hasData: !!data, hasResponse: !!data?.response })
+      
+      if (error) {
+        console.error("❌ Error generating suggestions:", error)
+        return
       }
+      
+      if (!data?.response) {
+        console.warn("⚠️ No response from suggestion generation")
+        return
+      }
+      
+      const suggestionsText = data.response.trim()
+      console.log("🤖 Raw suggestions text:", suggestionsText)
+      
+      const suggestionsList = suggestionsText
+        .split('\n')
+        .filter(s => s.trim())
+        .slice(0, 3)
+        .map(s => s.replace(/^\d+\.\s*/, '').trim())
+      
+      console.log("🤖 Processed suggestions:", suggestionsList)
+      setSuggestions(suggestionsList)
     } catch (e) {
-      console.error('Failed to generate suggestions:', e)
+      console.error('❌ Failed to generate suggestions:', e)
     } finally {
       setLoadingSuggestions(false)
     }
@@ -336,22 +350,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           </motion.div>
         )}
 
-        {/* Follow-up suggestions */}
-        {suggestions.length > 0 && !loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <FollowUpSuggestions
-              suggestions={suggestions}
-              onSuggestionClick={handleSuggestionClick}
-              isLoading={loadingSuggestions}
-            />
-          </motion.div>
-        )}
-
-        {/* Show PubMed References at the bottom after all messages and suggestions */}
+        {/* Show PubMed References first */}
         {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
          messages[messages.length - 1]?.pubmedReferences && 
          messages[messages.length - 1]?.pubmedReferences!.length > 0 && (
@@ -366,6 +365,22 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
               translatedQuery={messages[messages.length - 1]?.translatedQuery}
               searchType={messages[messages.length - 1]?.searchType}
               selectedKeyword={messages[messages.length - 1]?.selectedKeyword}
+            />
+          </motion.div>
+        )}
+
+        {/* Follow-up suggestions - NOW AFTER PubMed references */}
+        {suggestions.length > 0 && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mb-4"
+          >
+            <FollowUpSuggestions
+              suggestions={suggestions}
+              onSuggestionClick={handleSuggestionClick}
+              isLoading={loadingSuggestions}
             />
           </motion.div>
         )}
