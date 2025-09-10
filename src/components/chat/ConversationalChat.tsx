@@ -129,14 +129,14 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     }
   }
 
-  const handleAsk = async (inputPrompt?: string, isContinuation = false, previousMessageIndex?: number) => {
+  const handleAsk = async (inputPrompt?: string, isContinuation = false, previousMessageIndex?: number, previousResponseText?: string) => {
     const currentPrompt = inputPrompt || prompt.trim()
     if (!currentPrompt && !isContinuation) return
 
     // Get the previous response if this is a continuation
-    const previousResponse = isContinuation && previousMessageIndex !== undefined 
+    const previousResponse = previousResponseText || (isContinuation && previousMessageIndex !== undefined 
       ? messages[previousMessageIndex]?.content 
-      : undefined
+      : undefined)
 
     setLoading(true)
     setSuggestions([])
@@ -313,8 +313,25 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     const message = messages[messageIndex]
     if (message?.type === 'ai') {
       // Find the original user prompt for this AI response
-      const userPrompt = messageIndex > 0 ? messages[messageIndex - 1]?.content : prompt
-      await handleAsk(userPrompt, true, messageIndex)
+      let userPrompt = "";
+      
+      // Look backwards to find the most recent user message
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (messages[i]?.type === 'user') {
+          userPrompt = messages[i].content;
+          break;
+        }
+      }
+      
+      if (userPrompt) {
+        await handleAsk(userPrompt, true, messageIndex, message.content);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se encontró la pregunta original para continuar la respuesta.",
+        });
+      }
     }
   }
 

@@ -162,15 +162,17 @@ serve(async (req) => {
 
     const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
-    if (!rawPrompt) {
+    
+    // Allow empty prompts only for continuation requests
+    if (!rawPrompt && !continueResponse) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Enforce a maximum length before calling the model
+    // Enforce a maximum length before calling the model (skip for continuations)
     const MAX_PROMPT_CHARS = 1200;
-    if (rawPrompt.length > MAX_PROMPT_CHARS) {
+    if (!continueResponse && rawPrompt.length > MAX_PROMPT_CHARS) {
       return new Response(JSON.stringify({ error: `El prompt excede el límite de ${MAX_PROMPT_CHARS} caracteres.` }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -325,8 +327,19 @@ serve(async (req) => {
 
     // Handle continuation of previous response
     if (continueResponse && previousResponse) {
+      console.log('Processing continuation request:', { 
+        originalPrompt: rawPrompt, 
+        previousResponseLength: previousResponse.length,
+        previousResponsePreview: previousResponse.slice(-100)
+      });
       systemContent += " Continúa la respuesta anterior donde se quedó, manteniendo el mismo contexto y nivel de detalle.";
       userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-200)}..." para la pregunta original: "${rawPrompt}"`;
+    } else if (continueResponse) {
+      console.error('Continuation requested but no previousResponse provided');
+      return new Response(JSON.stringify({ error: "Error: No se proporcionó respuesta anterior para continuar." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     } else {
       // Call PubMed search only for new queries (not continuations)
       try {
