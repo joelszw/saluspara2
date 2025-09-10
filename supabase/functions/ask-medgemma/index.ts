@@ -156,11 +156,18 @@ serve(async (req) => {
   }
 
   try {
+    console.log('=== ask-medgemma function called ===');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
     if (!HUGGINGFACE_API_TOKEN) {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse } = (await req.json()) as AskRequest;
+    const requestBody = await req.json();
+    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+    
+    const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse } = requestBody as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     
     // Allow empty prompts only for continuation requests

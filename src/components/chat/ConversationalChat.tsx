@@ -196,24 +196,39 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       console.log('Calling ask-medgemma function...', { 
         isContinuation,
         userId: !!userId,
-        skipStorage: !userId
+        skipStorage: !userId,
+        currentPrompt,
+        previousResponseLength: previousResponse?.length,
+        hasGuestToken: !!guestCaptchaToken
       });
       
+      const requestBody = { 
+        prompt: currentPrompt, 
+        captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
+        pubmedContext,
+        skipStorage: !userId,
+        continueResponse: isContinuation,
+        previousResponse: previousResponse
+      };
+      
+      console.log('Request body for ask-medgemma:', JSON.stringify(requestBody, null, 2));
+      
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
-        body: { 
-          prompt: currentPrompt, 
-          captchaToken: !userId ? guestCaptchaToken ?? undefined : undefined,
-          pubmedContext,
-          skipStorage: !userId,
-          continueResponse: isContinuation,
-          previousResponse: previousResponse
-        },
+        body: requestBody,
       })
       
+      console.log('Response from ask-medgemma:', { data, error, hasData: !!data, hasError: !!error });
+      
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('Edge function error details:', {
+          error,
+          message: error.message,
+          stack: error.stack,
+          toString: error.toString(),
+          type: typeof error
+        });
         const errorMessage = error.message || error.toString();
-        throw new Error(`Error ${errorMessage.includes('202') ? '202' : ''}: ${errorMessage}`);
+        throw new Error(`Error de función: ${errorMessage}`);
       }
       if (data?.error) {
         console.error('Response error:', data);
