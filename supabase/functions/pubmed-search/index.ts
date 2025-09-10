@@ -39,37 +39,53 @@ async function translateToEnglish(spanishText: string, hf: HfInference): Promise
 
 async function extractKeywords(text: string, hf: HfInference): Promise<string[]> {
   try {
-    // Use a text generation model to extract medical keywords
-    const prompt = `Extract 4-5 important medical keywords from this text for PubMed search. Return only the keywords separated by commas, no explanations: "${text}"`
+    console.log('Extracting keywords from:', text);
     
+    // Use a more appropriate model for medical keyword extraction
     const result = await hf.textGeneration({
-      model: 'microsoft/DialoGPT-medium',
-      inputs: prompt,
+      model: 'microsoft/BioGPT-Large',
+      inputs: `Medical keywords from: "${text}"\nKeywords:`,
       parameters: {
-        max_new_tokens: 50,
-        temperature: 0.3,
-        return_full_text: false
-      }
-    })
+        max_new_tokens: 30,
+        temperature: 0.1,
+        do_sample: false,
+      },
+    });
     
-    const keywords = result.generated_text
-      ?.split(',')
-      .map(k => k.trim())
-      .filter(k => k.length > 2)
-      .slice(0, 5) || []
+    console.log('Raw keyword extraction result:', result);
     
-    // Fallback: extract common medical terms from the text
-    if (keywords.length === 0) {
-      const medicalTerms = text.toLowerCase().match(/\b(fractura|lesión|tratamiento|dolor|cirugía|diagnóstico|síntoma|medicamento|terapia|paciente|fracture|injury|treatment|pain|surgery|diagnosis|symptom|medication|therapy|patient)\b/g) || []
-      return [...new Set(medicalTerms)].slice(0, 5)
+    if (result && typeof result === 'object' && 'generated_text' in result) {
+      const keywords = result.generated_text
+        .replace(`Medical keywords from: "${text}"\nKeywords:`, '')
+        .split(/[,\n]/)
+        .map(k => k.trim())
+        .filter(k => k.length > 2 && k.length < 30 && !k.includes(':'))
+        .slice(0, 5);
+      
+      console.log('Extracted keywords:', keywords);
+      return keywords.length > 0 ? keywords : getBasicMedicalKeywords(text);
     }
     
-    return keywords
+    return getBasicMedicalKeywords(text);
   } catch (error) {
-    console.warn('Keyword extraction failed:', error)
-    // Fallback keywords for medical queries
-    return ['medical', 'treatment', 'diagnosis']
+    console.warn('Keyword extraction failed:', error);
+    return getBasicMedicalKeywords(text);
   }
+}
+
+function getBasicMedicalKeywords(text: string): string[] {
+  // Extract basic medical keywords from common terms
+  const medicalTerms = [
+    'fractura', 'dolor', 'lesion', 'tratamiento', 'cirugia', 'rehabilitacion',
+    'fracture', 'pain', 'injury', 'treatment', 'surgery', 'rehabilitation',
+    'ortopedia', 'traumatologia', 'orthopedic', 'trauma', 'bone', 'joint'
+  ];
+  
+  const foundTerms = medicalTerms.filter(term => 
+    text.toLowerCase().includes(term.toLowerCase())
+  ).slice(0, 3);
+  
+  return foundTerms.length > 0 ? [...foundTerms, 'medical', 'treatment'] : ['medical', 'treatment', 'diagnosis'];
 }
 
 async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {

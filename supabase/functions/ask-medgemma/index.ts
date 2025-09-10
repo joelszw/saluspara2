@@ -244,7 +244,11 @@ serve(async (req) => {
       }
 
       if (!TURNSTILE_SECRET) {
-        return new Response(JSON.stringify({ error: "Falta TURNSTILE_SECRET en los secretos de funciones." }), {
+        console.error('Missing TURNSTILE_SECRET for guest user verification');
+        return new Response(JSON.stringify({ 
+          error: "Error de configuración del servidor. Contacte al administrador.",
+          code: "MISSING_TURNSTILE_SECRET"
+        }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -315,12 +319,34 @@ serve(async (req) => {
     let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";
     let userPrompt = rawPrompt;
 
-    // Add PubMed context if available
-    if (pubmedContext && pubmedContext.length > 0) {
-      systemContent += "\n\nContexto adicional de literatura científica reciente de PubMed:";
-      pubmedContext.forEach((article: any, index: number) => {
-        systemContent += `\n${index + 1}. ${article.title} (${article.year}) - ${article.journal}\nResumen: ${article.abstract}`;
+    // Call PubMed search if enabled
+    let pubmedContext = '';
+    let pubmedReferences = [];
+    try {
+      console.log('Calling PubMed search for enhanced context...');
+      const pubmedResponse = await supabase.functions.invoke('pubmed-search', {
+        body: { prompt: rawPrompt }
       });
+      
+      if (pubmedResponse.data && !pubmedResponse.error) {
+        const { articles, keywords, translatedQuery } = pubmedResponse.data;
+        if (articles && articles.length > 0) {
+          console.log(`Found ${articles.length} PubMed articles for keywords: ${keywords?.join(', ')}`);
+          pubmedContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
+            `${index + 1}. ${article.title} (${article.year}) - ${article.abstract?.substring(0, 150) || 'Sin resumen disponible'}...`
+          ).join('\n')}`;
+          pubmedReferences = articles;
+        }
+      } else {
+        console.warn('PubMed search returned error:', pubmedResponse.error);
+      }
+    } catch (pubmedError) {
+      console.warn('PubMed search failed, continuing without references:', pubmedError.message);
+    }
+
+    // Add PubMed context to system prompt
+    if (pubmedContext) {
+      systemContent += pubmedContext;
       systemContent += "\n\nUsa este contexto para enriquecer tu respuesta cuando sea relevante, pero mantén tu especialización en traumatología y ortopedia.";
     }
 
@@ -386,7 +412,11 @@ serve(async (req) => {
       }).eq("id", userId);
     }
 
-    return new Response(JSON.stringify({ response: generated, queryId }), {
+    return new Response(JSON.stringify({ 
+      response: generated, 
+      queryId,
+      pubmedReferences: pubmedReferences || []
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
