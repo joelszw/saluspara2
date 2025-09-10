@@ -22,7 +22,7 @@ function getCorsHeaders(req: Request) {
   } as const;
 }
 
-interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[] }
+interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[]; skipStorage?: boolean }
 
 // Security: PII detection patterns for medical data
 const PII_PATTERNS = [
@@ -160,7 +160,7 @@ serve(async (req) => {
       throw new Error("Falta HUGGINGFACE_API_TOKEN en los secretos de funciones.");
     }
 
-    const { prompt, model, captchaToken, pubmedContext } = (await req.json()) as AskRequest;
+    const { prompt, model, captchaToken, pubmedContext, skipStorage } = (await req.json()) as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     if (!rawPrompt) {
       return new Response(JSON.stringify({ error: "El prompt no puede estar vacío." }), {
@@ -169,7 +169,7 @@ serve(async (req) => {
       });
     }
     // Enforce a maximum length before calling the model
-    const MAX_PROMPT_CHARS = 1200;
+    const MAX_PROMPT_CHARS = 2000;
     if (rawPrompt.length > MAX_PROMPT_CHARS) {
       return new Response(JSON.stringify({ error: `El prompt excede el límite de ${MAX_PROMPT_CHARS} caracteres.` }), {
         status: 400,
@@ -382,23 +382,25 @@ serve(async (req) => {
       generated = typeof data === "string" ? data : JSON.stringify(data);
     }
 
-    // Save query (authenticated or anonymous with null user_id)
-    const insertRes = await supabase.from("queries").insert({
-      user_id: userId,
-      prompt: rawPrompt,
-      response: generated,
-    }).select('id');
-    
+    // Save query (authenticated or anonymous with null user_id) - only if not skipping storage
     let queryId = null;
-    if (insertRes.error) {
-      console.error("Error inserting query:", insertRes.error);
-      // Non-fatal: continue
-    } else if (insertRes.data?.[0]) {
-      queryId = insertRes.data[0].id;
+    if (!skipStorage) {
+      const insertRes = await supabase.from("queries").insert({
+        user_id: userId,
+        prompt: rawPrompt,
+        response: generated,
+      }).select('id');
+      
+      if (insertRes.error) {
+        console.error("Error inserting query:", insertRes.error);
+        // Non-fatal: continue
+      } else if (insertRes.data?.[0]) {
+        queryId = insertRes.data[0].id;
+      }
     }
 
-    // Optionally update convenient counters for authenticated users
-    if (userId) {
+    // Optionally update convenient counters for authenticated users (only if we saved the query)
+    if (userId && !skipStorage) {
       // Recompute counts after insert
       const { count: newDaily } = await supabase
         .from("queries").select("id", { count: "exact", head: true })

@@ -99,7 +99,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       // Generate 2-3 follow-up suggestions based on the AI response
       const { data, error } = await supabase.functions.invoke("ask-medgemma", {
         body: { 
-          prompt: `Basándote en esta consulta médica: "${originalPrompt}" y su respuesta: "${response.substring(0, 500)}...", genera exactamente 3 preguntas de seguimiento cortas y específicas que el usuario podría hacer. Responde SOLO con las 3 preguntas separadas por saltos de línea, sin numeración ni explicaciones adicionales.`,
+          prompt: `Basándote en esta respuesta: "${response.substring(0, 200)}..." sugiere 3 preguntas de seguimiento cortas sobre traumatología. Una por línea, sin números.`,
           model: "meta-llama/Llama-3.3-70B-Instruct:groq",
           skipStorage: true // Don't store this in the database
         },
