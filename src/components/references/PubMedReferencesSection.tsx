@@ -33,6 +33,16 @@ export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = (
   searchType,
   selectedKeyword
 }) => {
+  // Debug logging
+  console.log('🔍 PubMed Component Debug:', { 
+    searchType, 
+    selectedKeyword, 
+    keywords, 
+    articlesCount: articles?.length,
+    hasSearchType: !!searchType,
+    hasSelectedKeyword: !!selectedKeyword
+  });
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
 
