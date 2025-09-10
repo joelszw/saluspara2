@@ -163,6 +163,66 @@ function getAdvancedMedicalKeywords(text: string): string[] {
   return finalKeywords;
 }
 
+function selectMostSpecificKeyword(keywords: string[]): string {
+  console.log('Selecting most specific keyword from:', keywords);
+  
+  const scoredKeywords = keywords.map(keyword => {
+    let score = 0;
+    const lowerKeyword = keyword.toLowerCase();
+    
+    // Specific pathologies (highest priority)
+    const pathologies = ['exóstosis', 'exostosis', 'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis'];
+    if (pathologies.some(path => lowerKeyword.includes(path))) {
+      score += 10;
+    }
+    
+    // Specific anatomy
+    const anatomy = ['interdigital', 'plantar', 'dorsal', 'medial', 'lateral', 'proximal', 'distal'];
+    if (anatomy.some(anat => lowerKeyword.includes(anat))) {
+      score += 8;
+    }
+    
+    // Specific procedures
+    const procedures = ['osteotomy', 'arthrodesis', 'arthroplasty', 'resection', 'excision'];
+    if (procedures.some(proc => lowerKeyword.includes(proc))) {
+      score += 6;
+    }
+    
+    // Technical terms
+    const technical = ['minimally', 'invasive', 'percutaneous', 'arthroscopic', 'endoscopic'];
+    if (technical.some(tech => lowerKeyword.includes(tech))) {
+      score += 4;
+    }
+    
+    // Penalize generic terms
+    const generic = ['tratamiento', 'treatment', 'cirugía', 'surgery', 'terapia', 'therapy', 'manejo', 'management'];
+    if (generic.some(gen => lowerKeyword.includes(gen))) {
+      score -= 5;
+    }
+    
+    // Bonus for longer, more specific terms
+    if (keyword.length > 6) {
+      score += 2;
+    }
+    
+    // Bonus for Latin/medical endings
+    const medicalEndings = ['osis', 'itis', 'oma', 'ia', 'us', 'um'];
+    if (medicalEndings.some(ending => lowerKeyword.endsWith(ending))) {
+      score += 3;
+    }
+    
+    console.log(`Keyword "${keyword}" scored: ${score}`);
+    return { keyword, score };
+  });
+  
+  // Sort by score (highest first) and return the best keyword
+  const sortedKeywords = scoredKeywords.sort((a, b) => b.score - a.score);
+  const selectedKeyword = sortedKeywords[0]?.keyword || keywords[0];
+  
+  console.log('Selected keyword for OR search:', selectedKeyword, 'with score:', sortedKeywords[0]?.score);
+  return selectedKeyword;
+}
+
 function getBasicMedicalKeywords(text: string): string[] {
   // Enhanced basic medical keywords
   const basicTerms = [
@@ -218,12 +278,12 @@ async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
     if (allArticles.length <= 3) {
       console.log('Phase 2: Insufficient results with AND, trying OR search...')
       
-      // Use top 3 most important keywords for OR to avoid too broad results
-      const topKeywords = keywords.slice(0, 3)
-      const orQuery = topKeywords.join(' OR ')
+      // Use the most specific keyword for OR search to get relevant results
+      const mostSpecificKeyword = selectMostSpecificKeyword(keywords)
+      const orQuery = mostSpecificKeyword
       const orSearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(orQuery)}&mindate=${minYear}/01/01&maxdate=${currentYear}/12/31&retmax=10&retmode=json`
       
-      console.log('Phase 2: Searching PubMed with OR:', { topKeywords, query: orQuery, searchUrl: orSearchUrl })
+      console.log('Phase 2: Searching PubMed with OR:', { mostSpecificKeyword, query: orQuery, searchUrl: orSearchUrl })
       
       const orSearchResponse = await fetch(orSearchUrl)
       if (!orSearchResponse.ok) {
