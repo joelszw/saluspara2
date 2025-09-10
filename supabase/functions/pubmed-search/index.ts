@@ -172,28 +172,50 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     let score = 0;
     const lowerKeyword = keyword.toLowerCase();
     
-    // Expanded pathologies list with orthographic variations (HIGHEST PRIORITY)
+    // ENHANCED pathology detection - normalized text to catch all variations
+    const normalizedKeyword = lowerKeyword
+      .normalize('NFD') // Decompose accents
+      .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+      .replace(/[^a-z]/g, ''); // Keep only letters
+    
+    console.log(`DEBUG: Analyzing keyword "${keyword}" -> normalized: "${normalizedKeyword}"`);
+    
+    // Expanded pathologies list with ALL possible variations
     const pathologies = [
-      'exóstosis', 'exostosis', 'exostósis', // All variations of exostosis
+      'exostosis', 'exstosis', // Base forms without accents
       'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis',
       'morton', 'capsulitis', 'tendinitis', 'tendinosis',
-      'plantar fasciitis', 'morton neuroma', 'hallux valgus',
-      'bunion', 'hammer toe', 'claw toe', 'mallet toe'
+      'bunion', 'hammertoe', 'clawtoe', 'mallettoe'
     ];
-    if (pathologies.some(path => lowerKeyword.includes(path))) {
-      score += 15; // Increased from 10 to 15
+    
+    const isPathology = pathologies.some(path => {
+      const normalizedPath = path.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+      const match = normalizedKeyword.includes(normalizedPath) || lowerKeyword.includes(path);
+      if (match) {
+        console.log(`DEBUG: Found pathology match: "${keyword}" contains "${path}"`);
+      }
+      return match;
+    });
+    
+    if (isPathology) {
+      score += 15; // HIGHEST PRIORITY for pathologies
+      console.log(`DEBUG: "${keyword}" identified as PATHOLOGY (+15 points)`);
     }
     
     // Specific anatomy (reduced priority)
     const anatomy = ['interdigital', 'plantar', 'dorsal', 'medial', 'lateral', 'proximal', 'distal'];
-    if (anatomy.some(anat => lowerKeyword.includes(anat))) {
+    const isAnatomy = anatomy.some(anat => lowerKeyword.includes(anat));
+    if (isAnatomy) {
       score += 6; // Reduced from 8 to 6
+      console.log(`DEBUG: "${keyword}" identified as ANATOMY (+6 points)`);
     }
     
     // Specific procedures
     const procedures = ['osteotomy', 'arthrodesis', 'arthroplasty', 'resection', 'excision'];
-    if (procedures.some(proc => lowerKeyword.includes(proc))) {
+    const isProcedure = procedures.some(proc => lowerKeyword.includes(proc));
+    if (isProcedure) {
       score += 8; // Slightly increased
+      console.log(`DEBUG: "${keyword}" identified as PROCEDURE (+8 points)`);
     }
     
     // Technical terms
@@ -225,7 +247,7 @@ function selectMostSpecificKeyword(keywords: string[]): string {
       }
     }
     
-    console.log(`Keyword "${keyword}" scored: ${score} (pathology: ${pathologies.some(path => lowerKeyword.includes(path))}, anatomy: ${anatomy.some(anat => lowerKeyword.includes(anat))}, procedure: ${procedures.some(proc => lowerKeyword.includes(proc))})`);
+    console.log(`FINAL SCORE: "${keyword}" = ${score} points (pathology: ${isPathology}, anatomy: ${isAnatomy}, procedure: ${isProcedure})`);
     return { keyword, score };
   });
   
