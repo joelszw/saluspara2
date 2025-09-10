@@ -183,39 +183,84 @@ async function searchPubMed(keywords: string[]): Promise<PubMedArticle[]> {
   try {
     const currentYear = new Date().getFullYear()
     const minYear = currentYear - 3
-    const query = keywords.join(' AND ')
     
-    // Search PubMed for article IDs
-    const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&mindate=${minYear}/01/01&maxdate=${currentYear}/12/31&retmax=10&retmode=json`
+    // Phase 1: Search with AND (more specific)
+    const andQuery = keywords.join(' AND ')
+    const andSearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(andQuery)}&mindate=${minYear}/01/01&maxdate=${currentYear}/12/31&retmax=10&retmode=json`
     
-    console.log('Searching PubMed with:', { keywords, query, searchUrl })
+    console.log('Phase 1: Searching PubMed with AND:', { keywords, query: andQuery, searchUrl: andSearchUrl })
     
-    const searchResponse = await fetch(searchUrl)
-    if (!searchResponse.ok) {
-      throw new Error(`PubMed search failed: ${searchResponse.status}`)
+    let allArticles: PubMedArticle[] = []
+    
+    // First search with AND
+    const andSearchResponse = await fetch(andSearchUrl)
+    if (!andSearchResponse.ok) {
+      throw new Error(`PubMed AND search failed: ${andSearchResponse.status}`)
     }
     
-    const searchData = await searchResponse.json()
-    const pmids = searchData.esearchresult?.idlist || []
+    const andSearchData = await andSearchResponse.json()
+    const andPmids = andSearchData.esearchresult?.idlist || []
     
-    if (pmids.length === 0) {
-      console.log('No articles found in PubMed')
-      return []
+    if (andPmids.length > 0) {
+      const andDetailsUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${andPmids.join(',')}&retmode=xml`
+      
+      const andDetailsResponse = await fetch(andDetailsUrl)
+      if (!andDetailsResponse.ok) {
+        throw new Error(`PubMed AND details fetch failed: ${andDetailsResponse.status}`)
+      }
+      
+      const andXmlText = await andDetailsResponse.text()
+      allArticles = parsePubMedXML(andXmlText)
+      console.log(`Phase 1 (AND): Found ${allArticles.length} articles`)
     }
     
-    // Fetch detailed information for each article
-    const detailsUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&retmode=xml`
-    
-    const detailsResponse = await fetch(detailsUrl)
-    if (!detailsResponse.ok) {
-      throw new Error(`PubMed details fetch failed: ${detailsResponse.status}`)
+    // Phase 2: If we have 3 or fewer articles, search with OR for more results
+    if (allArticles.length <= 3) {
+      console.log('Phase 2: Insufficient results with AND, trying OR search...')
+      
+      // Use top 3 most important keywords for OR to avoid too broad results
+      const topKeywords = keywords.slice(0, 3)
+      const orQuery = topKeywords.join(' OR ')
+      const orSearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(orQuery)}&mindate=${minYear}/01/01&maxdate=${currentYear}/12/31&retmax=10&retmode=json`
+      
+      console.log('Phase 2: Searching PubMed with OR:', { topKeywords, query: orQuery, searchUrl: orSearchUrl })
+      
+      const orSearchResponse = await fetch(orSearchUrl)
+      if (!orSearchResponse.ok) {
+        console.warn(`PubMed OR search failed: ${orSearchResponse.status}`)
+      } else {
+        const orSearchData = await orSearchResponse.json()
+        const orPmids = orSearchData.esearchresult?.idlist || []
+        
+        if (orPmids.length > 0) {
+          const orDetailsUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${orPmids.join(',')}&retmode=xml`
+          
+          const orDetailsResponse = await fetch(orDetailsUrl)
+          if (!orDetailsResponse.ok) {
+            console.warn(`PubMed OR details fetch failed: ${orDetailsResponse.status}`)
+          } else {
+            const orXmlText = await orDetailsResponse.text()
+            const orArticles = parsePubMedXML(orXmlText)
+            console.log(`Phase 2 (OR): Found ${orArticles.length} additional articles`)
+            
+            // Combine results, avoiding duplicates by PMID
+            const existingPmids = new Set(allArticles.map(article => article.pmid))
+            const newArticles = orArticles.filter(article => !existingPmids.has(article.pmid))
+            
+            allArticles = [...allArticles, ...newArticles]
+            console.log(`Combined results: ${allArticles.length} unique articles (${newArticles.length} new from OR search)`)
+          }
+        }
+      }
     }
     
-    const xmlText = await detailsResponse.text()
-    const articles = parsePubMedXML(xmlText)
+    if (allArticles.length === 0) {
+      console.log('No articles found in PubMed with either AND or OR search')
+    } else {
+      console.log(`Final result: ${allArticles.length} PubMed articles`)
+    }
     
-    console.log(`Found ${articles.length} PubMed articles`)
-    return articles
+    return allArticles
     
   } catch (error) {
     console.error('PubMed search error:', error)
