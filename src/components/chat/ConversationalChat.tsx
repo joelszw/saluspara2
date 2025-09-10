@@ -26,6 +26,7 @@ interface ChatMessage {
   searchType?: 'AND' | 'OR'
   selectedKeyword?: string
   canContinue?: boolean
+  originalLength?: number
 }
 
 interface ConversationalChatProps {
@@ -254,12 +255,17 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           ? messages[previousMessageIndex].content + ' ' + response 
           : response,
         timestamp: new Date().toISOString(),
-        pubmedReferences: isContinuation ? [] : pubmedContext,
+        pubmedReferences: isContinuation && previousMessageIndex !== undefined 
+          ? messages[previousMessageIndex].pubmedReferences 
+          : pubmedContext,
         keywords: extractedKeywords,
         translatedQuery: translatedQuery,
         searchType: searchType,
         selectedKeyword: selectedKeyword,
-        canContinue: data?.canContinue
+        canContinue: data?.canContinue,
+        originalLength: isContinuation && previousMessageIndex !== undefined 
+          ? messages[previousMessageIndex].content.length 
+          : undefined
       }
 
       if (isContinuation && previousMessageIndex !== undefined) {
@@ -422,6 +428,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                   summary={message.summary}
                   timestamp={message.timestamp}
                   loadingSummary={loadingSummary}
+                  isContinuation={message.originalLength !== undefined}
+                  originalLength={message.originalLength}
                 />
                 {message.canContinue && !loading && (
                   <motion.div

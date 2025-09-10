@@ -9,9 +9,11 @@ interface ChatBubbleAIProps {
   timestamp: string
   isLoading?: boolean
   loadingSummary?: boolean
+  isContinuation?: boolean
+  originalLength?: number
 }
 
-export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSummary }: ChatBubbleAIProps) {
+export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSummary, isContinuation, originalLength }: ChatBubbleAIProps) {
   const formatMessage = (text: string) => {
     return DOMPurify.sanitize(
       text
@@ -66,7 +68,22 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
               <span className="text-sm font-medium text-primary">Respuesta Médica</span>
             </div>
             <div className="prose prose-sm max-w-none dark:prose-invert text-sm">
-              <MedicalTermsTooltip text={formatMessage(message)} />
+              {isContinuation && originalLength ? (
+                <>
+                  <MedicalTermsTooltip text={formatMessage(message.substring(0, originalLength))} />
+                  <div className="border-t border-border/50 my-4 pt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
+                        <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                      </svg>
+                      <span className="text-sm font-medium text-primary">Continuación a la respuesta</span>
+                    </div>
+                    <MedicalTermsTooltip text={formatMessage(message.substring(originalLength + 1))} />
+                  </div>
+                </>
+              ) : (
+                <MedicalTermsTooltip text={formatMessage(message)} />
+              )}
             </div>
           </div>
 
