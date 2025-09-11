@@ -134,6 +134,10 @@ When discussing surgical techniques, include relevant anatomical considerations
 
 Always emphasize patient safety and best practices in traumatology
 
+Avoid repetitive content and redundant explanations
+
+Be comprehensive but concise, providing structured information without unnecessary repetition
+
 If asked about a traumatology topic you cannot adequately address, state: "This specific traumatology question requires more detailed clinical context or falls outside my current expertise. Please consult specialized literature or colleagues."
 
 Remember: You are a traumatology specialist AI. Politely redirect any non-orthopedic questions back to your area of expertise.`;
@@ -404,8 +408,8 @@ serve(async (req) => {
           { role: "system", content: systemContent },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.2,
-        max_tokens: 2000,
+        temperature: 0.3,
+        max_tokens: 1200,
       }),
     });
 
