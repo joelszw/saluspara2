@@ -358,7 +358,7 @@ serve(async (req) => {
         previousResponsePreview: previousResponse.slice(-100)
       });
       systemContent += " Continúa la respuesta anterior donde se quedó, manteniendo el mismo contexto y nivel de detalle.";
-      userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-200)}..." para la pregunta original: "${rawPrompt}"`;
+      userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-150)}..." para la pregunta original: "${rawPrompt.slice(0, 100)}"`;
     } else if (continueResponse) {
       console.error('Continuation requested but no previousResponse provided');
       return new Response(JSON.stringify({ error: "Error: No se proporcionó respuesta anterior para continuar." }), {
