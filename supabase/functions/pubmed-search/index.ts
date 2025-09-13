@@ -6,6 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Retry function for rate-limited requests
+async function fetchWithRetry(url: string, maxRetries = 3, delay = 1000): Promise<Response> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url)
+      
+      if (response.status === 429) {
+        console.warn(`Rate limited (429) on attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, delay))
+          delay *= 2 // Exponential backoff
+          continue
+        }
+      }
+      
+      return response
+    } catch (error) {
+      console.warn(`Fetch failed on attempt ${attempt}/${maxRetries}:`, error)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delay))
+        delay *= 2
+        continue
+      }
+      throw error
+    }
+  }
+  
+  throw new Error(`Failed after ${maxRetries} attempts`)
+}
+
 interface PubMedArticle {
   id: string
   title: string
@@ -344,7 +374,7 @@ async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArtic
     let allArticles: PubMedArticle[] = []
     
     // First search with AND
-    const andSearchResponse = await fetch(andSearchUrl)
+    const andSearchResponse = await fetchWithRetry(andSearchUrl)
     if (!andSearchResponse.ok) {
       throw new Error(`PubMed AND search failed: ${andSearchResponse.status}`)
     }
@@ -355,14 +385,16 @@ async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArtic
     if (andPmids.length > 0) {
       const andDetailsUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${andPmids.join(',')}&retmode=xml`
       
-      const andDetailsResponse = await fetch(andDetailsUrl)
+      const andDetailsResponse = await fetchWithRetry(andDetailsUrl)
       if (!andDetailsResponse.ok) {
-        throw new Error(`PubMed AND details fetch failed: ${andDetailsResponse.status}`)
-      }
+        console.warn(`PubMed AND details fetch failed: ${andDetailsResponse.status}`)
+        // Continue without throwing to allow OR search
+      } else {
       
-      const andXmlText = await andDetailsResponse.text()
-      allArticles = parsePubMedXML(andXmlText)
-      console.log(`Phase 1 (AND): Found ${allArticles.length} articles`)
+        const andXmlText = await andDetailsResponse.text()
+        allArticles = parsePubMedXML(andXmlText)
+        console.log(`Phase 1 (AND): Found ${allArticles.length} articles`)
+      }
     }
     
     // Phase 2: If we have 3 or fewer articles, search with OR for more results
@@ -376,7 +408,7 @@ async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArtic
       
       console.log('Phase 2: Searching PubMed with OR:', { mostSpecificKeyword, query: orQuery, searchUrl: orSearchUrl })
       
-      const orSearchResponse = await fetch(orSearchUrl)
+      const orSearchResponse = await fetchWithRetry(orSearchUrl)
       if (!orSearchResponse.ok) {
         console.warn(`PubMed OR search failed: ${orSearchResponse.status}`)
       } else {
@@ -386,7 +418,7 @@ async function searchPubMed(keywords: string[]): Promise<{ articles: PubMedArtic
         if (orPmids.length > 0) {
           const orDetailsUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${orPmids.join(',')}&retmode=xml`
           
-          const orDetailsResponse = await fetch(orDetailsUrl)
+          const orDetailsResponse = await fetchWithRetry(orDetailsUrl)
           if (!orDetailsResponse.ok) {
             console.warn(`PubMed OR details fetch failed: ${orDetailsResponse.status}`)
           } else {

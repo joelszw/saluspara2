@@ -46,6 +46,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null)
   const messagesStartRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [turnstileWidget, setTurnstileWidget] = useState<any>(null)
   
   const guestRemaining = useMemo(() => {
     const used = Number(localStorage.getItem("guest_query_count") || "0")
@@ -316,6 +317,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       if (!userId) {
         const used = Number(localStorage.getItem("guest_query_count") || "0")
         localStorage.setItem("guest_query_count", String(used + 1))
+        // Reset Turnstile after successful submission to prevent token reuse
+        if (turnstileWidget) {
+          turnstileWidget.reset()
+          setGuestCaptchaToken(null)
+        }
       } else {
         onUsageUpdate()
       }
@@ -380,20 +386,8 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   }
 
   const shouldShowContinueButton = (message: ChatMessage, index: number): boolean => {
-    // Server-side canContinue flag is primary indicator
-    if (message.canContinue === false) {
-      return false;
-    }
-    
-    // Additional client-side heuristics
-    const content = message.content;
-    const isLastMessage = index === messages.length - 1;
-    const endsAbruptly = !content.match(/[.!?]\s*$/);
-    const isLongEnough = content.length > 600;
-    const hasIncompleteThought = content.includes('...') || endsAbruptly;
-    
-    // Show button if server says yes, or if it meets client-side criteria for last message
-    return message.canContinue === true || (isLastMessage && isLongEnough && hasIncompleteThought);
+    // Only rely on server-side canContinue flag
+    return message.canContinue === true;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -548,6 +542,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                   sitekey={TURNSTILE_SITE_KEY}
                   onVerify={(t) => setGuestCaptchaToken(t)}
                   onExpire={() => setGuestCaptchaToken(null)}
+                  onLoad={(widgetId, widget) => setTurnstileWidget(widget)}
                   theme="auto"
                 />
               </div>
