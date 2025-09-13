@@ -379,6 +379,23 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
     setTimeout(() => handleAsk(suggestion), 100)
   }
 
+  const shouldShowContinueButton = (message: ChatMessage, index: number): boolean => {
+    // Server-side canContinue flag is primary indicator
+    if (message.canContinue === false) {
+      return false;
+    }
+    
+    // Additional client-side heuristics
+    const content = message.content;
+    const isLastMessage = index === messages.length - 1;
+    const endsAbruptly = !content.match(/[.!?]\s*$/);
+    const isLongEnough = content.length > 600;
+    const hasIncompleteThought = content.includes('...') || endsAbruptly;
+    
+    // Show button if server says yes, or if it meets client-side criteria for last message
+    return message.canContinue === true || (isLastMessage && isLongEnough && hasIncompleteThought);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -434,7 +451,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                   isContinuation={message.originalLength !== undefined}
                   originalLength={message.originalLength}
                 />
-                {message.canContinue && !loading && (
+                {shouldShowContinueButton(message, index) && !loading && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

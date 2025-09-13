@@ -134,9 +134,11 @@ When discussing surgical techniques, include relevant anatomical considerations
 
 Always emphasize patient safety and best practices in traumatology
 
-Avoid repetitive content and redundant explanations
+CRITICAL: Avoid repetitive content and redundant explanations at all costs
 
 Be comprehensive but concise, providing structured information without unnecessary repetition
+
+For continuations: DO NOT repeat information already provided. Build upon previous content with new, complementary information
 
 If asked about a traumatology topic you cannot adequately address, state: "This specific traumatology question requires more detailed clinical context or falls outside my current expertise. Please consult specialized literature or colleagues."
 
@@ -151,6 +153,49 @@ function startOfDay(date = new Date()): string {
 function startOfMonth(date = new Date()): string {
   const d = new Date(date.getFullYear(), date.getMonth(), 1);
   return d.toISOString();
+}
+
+// Function to remove duplicated content from continuation responses
+function deduplicateContent(newContent: string, previousContent: string): string {
+  const newSentences = newContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  const previousSentences = previousContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  // Remove sentences that are too similar to previous ones
+  const filteredSentences = newSentences.filter(newSentence => {
+    const newSentenceClean = newSentence.toLowerCase().trim();
+    return !previousSentences.some(prevSentence => {
+      const prevSentenceClean = prevSentence.toLowerCase().trim();
+      // Check for high similarity (>70% word overlap)
+      const newWords = newSentenceClean.split(/\s+/);
+      const prevWords = prevSentenceClean.split(/\s+/);
+      const commonWords = newWords.filter(word => prevWords.includes(word)).length;
+      const similarity = commonWords / Math.max(newWords.length, prevWords.length);
+      return similarity > 0.7;
+    });
+  });
+  
+  return filteredSentences.join('. ').trim() + (filteredSentences.length > 0 ? '.' : '');
+}
+
+// Function to determine if response can be continued
+function determineCanContinue(response: string, finishReason: string, usage: any): boolean {
+  // Don't continue if the model finished normally (not due to length)
+  if (finishReason === 'stop') {
+    return false;
+  }
+  
+  // Continue if truncated due to max_tokens
+  if (finishReason === 'length') {
+    return true;
+  }
+  
+  // For other cases, use heuristics
+  const responseLength = response.length;
+  const endsAbruptly = !response.match(/[.!?]\s*$/);
+  const isSubstantial = responseLength > 800;
+  
+  // Continue if response is substantial and ends abruptly
+  return isSubstantial && endsAbruptly;
 }
 
 serve(async (req) => {
@@ -357,8 +402,11 @@ serve(async (req) => {
         previousResponseLength: previousResponse.length,
         previousResponsePreview: previousResponse.slice(-100)
       });
-      systemContent += " Continúa la respuesta anterior donde se quedó, manteniendo el mismo contexto y nivel de detalle.";
-      userPrompt = `Continúa esta respuesta: "${previousResponse.slice(-150)}..." para la pregunta original: "${rawPrompt.slice(0, 100)}"`;
+      systemContent += " IMPORTANTE: Continúa la respuesta anterior sin repetir información ya proporcionada. Agrega contenido nuevo y complementario. NO repitas conceptos, definiciones o información ya mencionada.";
+      
+      // Get last 200 chars to understand context, but instruct to NOT repeat
+      const contextPreview = previousResponse.slice(-200);
+      userPrompt = `CONTINUAR (sin repetir): La respuesta anterior terminó con: "${contextPreview}..." Para la pregunta: "${rawPrompt.slice(0, 80)}". Proporciona información NUEVA y complementaria sin repetir lo ya explicado.`;
     } else if (continueResponse) {
       console.error('Continuation requested but no previousResponse provided');
       return new Response(JSON.stringify({ error: "Error: No se proporcionó respuesta anterior para continuar." }), {
@@ -410,6 +458,8 @@ serve(async (req) => {
         ],
         temperature: 0.3,
         max_tokens: 1200,
+        frequency_penalty: continueResponse ? 0.8 : 0.3, // Higher penalty for continuations to avoid repetition
+        presence_penalty: continueResponse ? 0.6 : 0.1,  // Encourage new topics for continuations
       }),
     });
 
@@ -424,8 +474,15 @@ serve(async (req) => {
 
     const data = await routerRes.json();
     let generated = data?.choices?.[0]?.message?.content ?? "";
+    const finishReason = data?.choices?.[0]?.finish_reason;
+    
     if (!generated) {
       generated = typeof data === "string" ? data : JSON.stringify(data);
+    }
+
+    // Post-process to remove potential repetition if this is a continuation
+    if (continueResponse && previousResponse) {
+      generated = deduplicateContent(generated, previousResponse);
     }
 
     // Save query (authenticated or anonymous with null user_id) - only if not skipping storage and not continuing
@@ -462,11 +519,14 @@ serve(async (req) => {
       }).eq("id", userId);
     }
 
+    // Determine if response can be continued based on finish_reason and token usage
+    const canContinue = determineCanContinue(generated, finishReason, data?.usage);
+
     return new Response(JSON.stringify({ 
       response: generated, 
       queryId,
       pubmedReferences: continueResponse ? [] : (pubmedReferences || []), // Don't return references for continuations
-      canContinue: generated.length >= 450 // Suggest continuation if response is substantial
+      canContinue: canContinue
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
