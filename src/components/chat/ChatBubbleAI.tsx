@@ -3,6 +3,17 @@ import { motion } from "framer-motion"
 import DOMPurify from "dompurify"
 import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
 
+interface PubMedArticle {
+  id: string
+  title: string
+  authors: string[]
+  abstract: string
+  url: string
+  year: string
+  journal: string
+  pmid: string
+}
+
 interface ChatBubbleAIProps {
   message: string
   summary?: string
@@ -11,21 +22,50 @@ interface ChatBubbleAIProps {
   loadingSummary?: boolean
   isContinuation?: boolean
   originalLength?: number
+  references?: PubMedArticle[]
 }
 
-export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSummary, isContinuation, originalLength }: ChatBubbleAIProps) {
-  const formatMessage = (text: string) => {
-    return DOMPurify.sanitize(
-      text
-        .replace(/\n/g, '<br>')
-        .replace(/\*\s/g, '<br>• ')
-        .replace(/(\d+\.\s)/g, '<br>$1')
-        .replace(/^\s*<br>/, ''), 
-      { 
-        ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
-        ALLOWED_ATTR: ["href","title","target","rel"] 
-      }
-    )
+export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSummary, isContinuation, originalLength, references }: ChatBubbleAIProps) {
+  const formatMessage = (text: string, pubmedRefs: PubMedArticle[] = []) => {
+    let formattedText = text
+      .replace(/\n/g, '<br>')
+      .replace(/\*\s/g, '<br>• ')
+      .replace(/(\d+\.\s)/g, '<br>$1')
+      .replace(/^\s*<br>/, '')
+
+    // Link article titles to PubMed URLs
+    if (pubmedRefs.length > 0) {
+      pubmedRefs.forEach(article => {
+        // Try exact title match (with quotes)
+        const quotedTitleRegex = new RegExp(`"([^"]*${escapeRegExp(article.title)}[^"]*)"`, 'gi')
+        formattedText = formattedText.replace(quotedTitleRegex, (match, capturedTitle) => {
+          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${capturedTitle}</a>"`
+        })
+
+        // Try exact title match (without quotes)
+        const exactTitleRegex = new RegExp(escapeRegExp(article.title), 'gi')
+        formattedText = formattedText.replace(exactTitleRegex, (match) => {
+          // Check if it's already inside a link tag
+          const beforeMatch = formattedText.substring(0, formattedText.indexOf(match))
+          const afterMatch = formattedText.substring(formattedText.indexOf(match) + match.length)
+          
+          if (beforeMatch.includes('<a') && !beforeMatch.includes('</a>') && afterMatch.includes('</a>')) {
+            return match // Already inside a link, don't modify
+          }
+          
+          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${match}</a>`
+        })
+      })
+    }
+
+    return DOMPurify.sanitize(formattedText, { 
+      ALLOWED_TAGS: ["b","strong","i","em","u","br","p","ul","ol","li","h1","h2","h3","code","pre","blockquote","a"], 
+      ALLOWED_ATTR: ["href","title","target","rel","class"] 
+    })
+  }
+
+  const escapeRegExp = (string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   }
 
   if (isLoading) {
@@ -70,7 +110,7 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
             <div className="prose prose-sm max-w-none dark:prose-invert text-sm">
               {isContinuation && originalLength ? (
                 <>
-                  <MedicalTermsTooltip text={formatMessage(message.substring(0, originalLength))} />
+                  <MedicalTermsTooltip text={formatMessage(message.substring(0, originalLength), references)} />
                   <div className="border-t border-border/50 my-4 pt-4">
                     <div className="flex items-center gap-2 mb-3">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
@@ -78,11 +118,11 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
                       </svg>
                       <span className="text-sm font-medium text-primary">Continuación a la respuesta</span>
                     </div>
-                    <MedicalTermsTooltip text={formatMessage(message.substring(originalLength + 1))} />
+                    <MedicalTermsTooltip text={formatMessage(message.substring(originalLength + 1), references)} />
                   </div>
                 </>
               ) : (
-                <MedicalTermsTooltip text={formatMessage(message)} />
+                <MedicalTermsTooltip text={formatMessage(message, references)} />
               )}
             </div>
           </div>

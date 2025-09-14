@@ -456,6 +456,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
                   loadingSummary={loadingSummary}
                   isContinuation={message.originalLength !== undefined}
                   originalLength={message.originalLength}
+                  references={message.pubmedReferences}
                 />
                 {shouldShowContinueButton(message, index) && !loading && (
                   <motion.div
