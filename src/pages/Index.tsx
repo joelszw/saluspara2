@@ -26,6 +26,7 @@ const Index = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [counts, setCounts] = useState<{ daily: number; monthly: number }>({ daily: 0, monthly: 0 });
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null);
+  const [guestUsed, setGuestUsed] = useState(() => Number(localStorage.getItem("guest_query_count") || "0"));
 
   // Auth state
   useEffect(() => {
@@ -66,10 +67,19 @@ const Index = () => {
     load();
   }, [userId]);
 
+  // Sync guest usage with localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setGuestUsed(Number(localStorage.getItem("guest_query_count") || "0"))
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   const guestRemaining = useMemo(() => {
-    const used = Number(localStorage.getItem("guest_query_count") || "0");
-    return Math.max(0, 3 - used);
-  }, [response]);
+    return Math.max(0, 3 - guestUsed);
+  }, [guestUsed]);
 
   const handleAsk = async () => {
     if (!prompt.trim()) return;
@@ -100,7 +110,9 @@ const Index = () => {
       // Update guest counter
       if (!userId) {
         const used = Number(localStorage.getItem("guest_query_count") || "0");
-        localStorage.setItem("guest_query_count", String(used + 1));
+        const newUsed = used + 1;
+        localStorage.setItem("guest_query_count", String(newUsed));
+        setGuestUsed(newUsed); // Update state immediately
       } else {
         // refresh counts and history
         setCounts((c) => ({ daily: c.daily + 1, monthly: c.monthly + 1 }));

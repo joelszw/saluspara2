@@ -47,11 +47,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const messagesStartRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [turnstileWidget, setTurnstileWidget] = useState<any>(null)
+  const [guestUsed, setGuestUsed] = useState(() => Number(localStorage.getItem("guest_query_count") || "0"))
   
   const guestRemaining = useMemo(() => {
-    const used = Number(localStorage.getItem("guest_query_count") || "0")
-    return Math.max(0, 3 - used)
-  }, [messages])
+    return Math.max(0, 3 - guestUsed)
+  }, [guestUsed])
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -84,6 +84,16 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       }
     }
   }, [userId])
+
+  // Sync guest usage with localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setGuestUsed(Number(localStorage.getItem("guest_query_count") || "0"))
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   // Save messages to localStorage
   useEffect(() => {
@@ -316,7 +326,9 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
       // Update counters
       if (!userId) {
         const used = Number(localStorage.getItem("guest_query_count") || "0")
-        localStorage.setItem("guest_query_count", String(used + 1))
+        const newUsed = used + 1
+        localStorage.setItem("guest_query_count", String(newUsed))
+        setGuestUsed(newUsed) // Update state immediately
         // Reset Turnstile after successful submission to prevent token reuse
         if (turnstileWidget) {
           turnstileWidget.reset()
