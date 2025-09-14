@@ -36,23 +36,49 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
     // Link article titles to PubMed URLs
     if (pubmedRefs.length > 0) {
       pubmedRefs.forEach(article => {
-        // Try exact title match (with quotes)
-        const quotedTitleRegex = new RegExp(`"([^"]*${escapeRegExp(article.title)}[^"]*)"`, 'gi')
-        formattedText = formattedText.replace(quotedTitleRegex, (match, capturedTitle) => {
+        // Clean title without quotes and years for matching
+        const cleanTitle = article.title.replace(/[""]/g, '"').trim()
+        
+        // Try title with year pattern: "Title" (YYYY) or Title (YYYY)
+        const titleWithYearRegex = new RegExp(`"([^"]*${escapeRegExp(cleanTitle)}[^"]*)"\\s*\\(\\d{4}\\)`, 'gi')
+        formattedText = formattedText.replace(titleWithYearRegex, (match, capturedTitle, offset) => {
+          // Check if already in link
+          if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
+            return match
+          }
+          const year = match.match(/\((\d{4})\)/)?.[1] || ''
+          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${capturedTitle}</a>" (${year})`
+        })
+
+        // Try title without quotes but with year: Title (YYYY)
+        const titleNoQuotesYearRegex = new RegExp(`${escapeRegExp(cleanTitle)}\\s*\\(\\d{4}\\)`, 'gi')
+        formattedText = formattedText.replace(titleNoQuotesYearRegex, (match, offset) => {
+          // Check if already in link
+          if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
+            return match
+          }
+          const year = match.match(/\((\d{4})\)/)?.[1] || ''
+          const titlePart = match.replace(/\s*\(\d{4}\)/, '')
+          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${titlePart}</a> (${year})`
+        })
+
+        // Try exact title match (with quotes, no year)
+        const quotedTitleRegex = new RegExp(`"([^"]*${escapeRegExp(cleanTitle)}[^"]*)"`, 'gi')
+        formattedText = formattedText.replace(quotedTitleRegex, (match, capturedTitle, offset) => {
+          // Check if already in link
+          if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
+            return match
+          }
           return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${capturedTitle}</a>"`
         })
 
-        // Try exact title match (without quotes)
-        const exactTitleRegex = new RegExp(escapeRegExp(article.title), 'gi')
-        formattedText = formattedText.replace(exactTitleRegex, (match) => {
-          // Check if it's already inside a link tag
-          const beforeMatch = formattedText.substring(0, formattedText.indexOf(match))
-          const afterMatch = formattedText.substring(formattedText.indexOf(match) + match.length)
-          
-          if (beforeMatch.includes('<a') && !beforeMatch.includes('</a>') && afterMatch.includes('</a>')) {
-            return match // Already inside a link, don't modify
+        // Try exact title match (without quotes, no year)
+        const exactTitleRegex = new RegExp(`\\b${escapeRegExp(cleanTitle)}\\b`, 'gi')
+        formattedText = formattedText.replace(exactTitleRegex, (match, offset) => {
+          // Check if already in link
+          if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
+            return match
           }
-          
           return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${match}</a>`
         })
       })
