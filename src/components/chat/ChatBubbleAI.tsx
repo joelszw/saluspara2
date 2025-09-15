@@ -82,6 +82,14 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
           return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${match}</a>`
         })
       })
+      
+      // Replace "Referencias:" with "Referencias de PubMed:" when PubMed links are present
+      const hasReferencesSection = /Referencias:/gi.test(formattedText)
+      const hasPubMedLinks = /<a[^>]*href="[^"]*pubmed[^"]*"[^>]*>/gi.test(formattedText)
+      
+      if (hasReferencesSection && hasPubMedLinks) {
+        formattedText = formattedText.replace(/Referencias:/gi, 'Referencias de PubMed:')
+      }
     }
 
     return DOMPurify.sanitize(formattedText, { 
