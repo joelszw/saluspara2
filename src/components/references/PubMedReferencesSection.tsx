@@ -135,13 +135,20 @@ export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = (
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-3">
                       <div className="flex items-start justify-between gap-4">
-                        <h4 className="font-semibold text-sm text-foreground line-clamp-2 leading-relaxed">
-                          {article.title}
+                        <h4 className="font-semibold text-sm leading-relaxed">
+                          <a 
+                            href={article.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-success hover:text-success/80 underline line-clamp-2 cursor-pointer"
+                          >
+                            {article.title}
+                          </a>
                         </h4>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="shrink-0 h-8 w-8 p-0"
+                          className="shrink-0 h-8 w-8 p-0 text-success hover:text-success/80"
                           onClick={() => window.open(article.url, '_blank')}
                         >
                           <ExternalLink className="h-4 w-4" />
