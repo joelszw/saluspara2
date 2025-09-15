@@ -140,7 +140,7 @@ export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = (
                             href={article.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-success hover:text-success/80 underline line-clamp-2 cursor-pointer"
+                            className="text-primary hover:text-primary/80 underline line-clamp-2 cursor-pointer"
                           >
                             {article.title}
                           </a>
@@ -148,7 +148,7 @@ export const PubMedReferencesSection: React.FC<PubMedReferencesSectionProps> = (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="shrink-0 h-8 w-8 p-0 text-success hover:text-success/80"
+                          className="shrink-0 h-8 w-8 p-0 text-primary hover:text-primary/80"
                           onClick={() => window.open(article.url, '_blank')}
                         >
                           <ExternalLink className="h-4 w-4" />
