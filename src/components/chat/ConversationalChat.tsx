@@ -493,10 +493,25 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         )}
 
         {/* Show PubMed References first - only for original messages, not continuations */}
-        {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && 
-         messages[messages.length - 1]?.pubmedReferences && 
-         messages[messages.length - 1]?.pubmedReferences!.length > 0 && 
-         messages[messages.length - 1]?.originalLength === undefined && (
+        {(() => {
+          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+          console.log('Debug PubMed Section:', {
+            hasMessages: messages.length > 0,
+            lastMessageType: lastMessage?.type,
+            hasPubmedRefs: !!lastMessage?.pubmedReferences,
+            pubmedRefsLength: lastMessage?.pubmedReferences?.length || 0,
+            originalLength: lastMessage?.originalLength,
+            shouldShow: messages.length > 0 && lastMessage?.type === 'ai' && 
+                       lastMessage?.pubmedReferences && 
+                       lastMessage?.pubmedReferences.length > 0 && 
+                       lastMessage?.originalLength === undefined
+          });
+          
+          return messages.length > 0 && lastMessage?.type === 'ai' && 
+                 lastMessage?.pubmedReferences && 
+                 lastMessage?.pubmedReferences.length > 0 && 
+                 lastMessage?.originalLength === undefined;
+        })() && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
