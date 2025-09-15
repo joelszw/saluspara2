@@ -47,7 +47,7 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
             return match
           }
           const year = match.match(/\((\d{4})\)/)?.[1] || ''
-          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${capturedTitle}</a>" (${year})`
+          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-success hover:text-success/80 underline font-medium">${capturedTitle}</a>" (${year})`
         })
 
         // Try title without quotes but with year: Title (YYYY)
@@ -59,7 +59,7 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
           }
           const year = match.match(/\((\d{4})\)/)?.[1] || ''
           const titlePart = match.replace(/\s*\(\d{4}\)/, '')
-          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${titlePart}</a> (${year})`
+          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-success hover:text-success/80 underline font-medium">${titlePart}</a> (${year})`
         })
 
         // Try exact title match (with quotes, no year)
@@ -69,7 +69,7 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
           if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
             return match
           }
-          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${capturedTitle}</a>"`
+          return `"<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-success hover:text-success/80 underline font-medium">${capturedTitle}</a>"`
         })
 
         // Try exact title match (without quotes, no year)
@@ -79,7 +79,7 @@ export function ChatBubbleAI({ message, summary, timestamp, isLoading, loadingSu
           if (formattedText.substring(0, offset).lastIndexOf('<a') > formattedText.substring(0, offset).lastIndexOf('</a>')) {
             return match
           }
-          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary/80 underline font-medium">${match}</a>`
+          return `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-success hover:text-success/80 underline font-medium">${match}</a>`
         })
       })
       
