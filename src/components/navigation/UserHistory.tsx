@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { History, Clock, ChevronDown } from "lucide-react"
 import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
+import { ExportHistoryControls } from "@/components/navigation/ExportHistoryControls"
 
 interface QueryItem {
   id: string
@@ -136,6 +137,9 @@ export function UserHistory({ history }: UserHistoryProps) {
                       </Dialog>
                     ))}
                   </div>
+
+                  {/* Export Controls */}
+                  <ExportHistoryControls />
                 </div>
               </ScrollArea>
             </motion.div>
