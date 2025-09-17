@@ -81,7 +81,7 @@ export const useExportHistory = () => {
 
       toast({
         title: "Exportación completada",
-        description: `Tu historial se ha exportado correctamente en formato ${format.toUpperCase()}`,
+        description: `Tu historial se ha exportado correctamente en formato ${format.toUpperCase()}. Disponible gratis para usuarios registrados.`,
         variant: "default",
       });
 

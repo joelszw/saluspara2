@@ -153,17 +153,17 @@ export function ExportHistoryControls() {
         </div>
 
         {/* Helper text */}
-        {!isValidDateRange && (fromDate || toDate) && (
-          <p className="text-xs text-muted-foreground">
-            Selecciona ambas fechas para exportar
-          </p>
-        )}
-        
-        {isValidDateRange && (
-          <p className="text-xs text-success">
-            Rango válido seleccionado
-          </p>
-        )}
+        <div className="text-xs text-muted-foreground space-y-1">
+          {!isValidDateRange && (fromDate || toDate) && (
+            <p>Selecciona ambas fechas para exportar</p>
+          )}
+          
+          {isValidDateRange && (
+            <p className="text-success">Rango válido • Disponible para usuarios registrados</p>
+          )}
+          
+          <p>Exporta tu historial médico de forma gratuita</p>
+        </div>
       </div>
     </motion.div>
   );

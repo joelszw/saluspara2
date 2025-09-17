@@ -106,6 +106,23 @@ serve(async (req) => {
 
     console.log(`Exporting ${format} for user ${userId} from ${fromDate} to ${toDate}`);
 
+    // Check user exists and is authenticated (no subscription restriction for exports)
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('subscription_status')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.error('User not found:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Usuario no encontrado' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`User ${userId} has subscription: ${userData.subscription_status}`);
+
     // Query the database with RLS automatically applied
     const { data: queries, error: queryError } = await supabase
       .from('queries')
@@ -130,9 +147,9 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${queries.length} queries to export`);
+    console.log(`Found ${queries.length} queries to export for registered user`);
 
-    // Log export activity
+    // Log export activity for registered users (free tier allowed)
     await supabase
       .from('function_usage')
       .insert({
