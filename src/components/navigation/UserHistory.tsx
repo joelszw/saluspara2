@@ -56,11 +56,11 @@ export function UserHistory({ history }: UserHistoryProps) {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-popover border rounded-md shadow-md z-50"
+              className="absolute right-0 top-full mt-2 w-80 bg-popover border rounded-md shadow-lg z-50"
             >
-              <ScrollArea className="h-full">
-                <div className="p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <ScrollArea className="max-h-[70vh]">
+                <div className="p-4 min-h-fit">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2 sticky top-0 bg-popover pb-2">
                     <History className="h-4 w-4" />
                     Tu historial reciente
                   </h3>
