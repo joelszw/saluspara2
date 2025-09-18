@@ -52,6 +52,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("queries")
         .select("id,prompt,response,timestamp")
+        .eq("user_id", userId)
         .order("timestamp", { ascending: false })
         .limit(30);
       if (!error && data) setHistory(data as QueryItem[]);
@@ -59,16 +60,16 @@ const Index = () => {
       const todayStart = new Date(); todayStart.setHours(0,0,0,0);
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       
-      // Only count queries for authenticated users
-      const baseQuery = supabase.from("queries").select("id", { count: "exact", head: true });
-      const todayQuery = userId ? baseQuery.eq("user_id", userId).gte("timestamp", todayStart.toISOString()) : baseQuery.gte("timestamp", todayStart.toISOString());
-      const monthQuery = userId ? baseQuery.eq("user_id", userId).gte("timestamp", monthStart.toISOString()) : baseQuery.gte("timestamp", monthStart.toISOString());
-      
-      const [{ count: daily }, { count: monthly }] = await Promise.all([
-        todayQuery,
-        monthQuery,
-      ]);
-      setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 });
+      // Only count queries for the current authenticated user
+      if (userId) {
+        const [{ count: daily }, { count: monthly }] = await Promise.all([
+          supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
+          supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
+        ]);
+        setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 });
+      } else {
+        setCounts({ daily: 0, monthly: 0 });
+      }
     };
     load();
   }, [userId]);
@@ -120,9 +121,18 @@ const Index = () => {
         localStorage.setItem("guest_query_count", String(newUsed));
         setGuestUsed(newUsed); // Update state immediately
       } else {
-        // refresh counts and history
-        setCounts((c) => ({ daily: c.daily + 1, monthly: c.monthly + 1 }));
-        setHistory((h) => [{ id: crypto.randomUUID(), prompt, response: text, timestamp: new Date().toISOString() }, ...h]);
+        // Reload real counts and history from database
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        
+        const [{ count: daily }, { count: monthly }, { data: historyData }] = await Promise.all([
+          supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
+          supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
+          supabase.from("queries").select("id,prompt,response,timestamp").eq("user_id", userId).order("timestamp", { ascending: false }).limit(30)
+        ]);
+        
+        setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 });
+        if (historyData) setHistory(historyData as QueryItem[]);
       }
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "No se pudo obtener respuesta." });
