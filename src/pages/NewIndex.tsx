@@ -74,6 +74,7 @@ const NewIndex = () => {
       supabase
         .from("queries")
         .select("id,prompt,response,timestamp")
+        .eq("user_id", userId)
         .order("timestamp", { ascending: false })
         .limit(30)
         .then(({ data }) => {
