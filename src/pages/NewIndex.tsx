@@ -67,20 +67,22 @@ const NewIndex = () => {
     loadUserData()
   }, [userId])
 
-  const handleUsageUpdate = () => {
-    setCounts((c) => ({ daily: c.daily + 1, monthly: c.monthly + 1 }))
-    // Reload history if needed
-    if (userId) {
-      supabase
-        .from("queries")
-        .select("id,prompt,response,timestamp")
-        .eq("user_id", userId)
-        .order("timestamp", { ascending: false })
-        .limit(30)
-        .then(({ data }) => {
-          if (data) setHistory(data as QueryItem[])
-        })
-    }
+  const handleUsageUpdate = async () => {
+    if (!userId) return
+    
+    // Reload real counts from database
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    
+    const [{ count: daily }, { count: monthly }, { data: historyData }] = await Promise.all([
+      supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
+      supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
+      supabase.from("queries").select("id,prompt,response,timestamp").eq("user_id", userId).order("timestamp", { ascending: false }).limit(30)
+    ])
+    
+    setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 })
+    if (historyData) setHistory(historyData as QueryItem[])
   }
 
   return (
