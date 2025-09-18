@@ -58,9 +58,15 @@ const Index = () => {
 
       const todayStart = new Date(); todayStart.setHours(0,0,0,0);
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      
+      // Only count queries for authenticated users
+      const baseQuery = supabase.from("queries").select("id", { count: "exact", head: true });
+      const todayQuery = userId ? baseQuery.eq("user_id", userId).gte("timestamp", todayStart.toISOString()) : baseQuery.gte("timestamp", todayStart.toISOString());
+      const monthQuery = userId ? baseQuery.eq("user_id", userId).gte("timestamp", monthStart.toISOString()) : baseQuery.gte("timestamp", monthStart.toISOString());
+      
       const [{ count: daily }, { count: monthly }] = await Promise.all([
-        supabase.from("queries").select("id", { count: "exact", head: true }).gte("timestamp", todayStart.toISOString()),
-        supabase.from("queries").select("id", { count: "exact", head: true }).gte("timestamp", monthStart.toISOString()),
+        todayQuery,
+        monthQuery,
       ]);
       setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 });
     };

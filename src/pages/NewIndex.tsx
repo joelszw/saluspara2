@@ -48,6 +48,7 @@ const NewIndex = () => {
       const { data, error } = await supabase
         .from("queries")
         .select("id,prompt,response,timestamp")
+        .eq("user_id", userId)
         .order("timestamp", { ascending: false })
         .limit(30)
       if (!error && data) setHistory(data as QueryItem[])
@@ -57,8 +58,8 @@ const NewIndex = () => {
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       
       const [{ count: daily }, { count: monthly }] = await Promise.all([
-        supabase.from("queries").select("id", { count: "exact", head: true }).gte("timestamp", todayStart.toISOString()),
-        supabase.from("queries").select("id", { count: "exact", head: true }).gte("timestamp", monthStart.toISOString()),
+        supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
+        supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
       ])
       setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 })
     }
