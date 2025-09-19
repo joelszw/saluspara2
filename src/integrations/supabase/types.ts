@@ -41,26 +41,41 @@ export type Database = {
       queries: {
         Row: {
           id: string
+          keywords: string[] | null
           prompt: string
+          pubmed_references: Json | null
           response: string | null
+          search_type: string | null
+          selected_keyword: string | null
           summary: string | null
           timestamp: string
+          translated_query: string | null
           user_id: string | null
         }
         Insert: {
           id?: string
+          keywords?: string[] | null
           prompt: string
+          pubmed_references?: Json | null
           response?: string | null
+          search_type?: string | null
+          selected_keyword?: string | null
           summary?: string | null
           timestamp?: string
+          translated_query?: string | null
           user_id?: string | null
         }
         Update: {
           id?: string
+          keywords?: string[] | null
           prompt?: string
+          pubmed_references?: Json | null
           response?: string | null
+          search_type?: string | null
+          selected_keyword?: string | null
           summary?: string | null
           timestamp?: string
+          translated_query?: string | null
           user_id?: string | null
         }
         Relationships: []

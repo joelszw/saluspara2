@@ -221,6 +221,10 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
         prompt: currentPrompt, 
         captchaToken: (!userId && !isContinuation) ? guestCaptchaToken ?? undefined : undefined,
         pubmedContext,
+        keywords: extractedKeywords,
+        translatedQuery: translatedQuery,
+        searchType: searchType,
+        selectedKeyword: selectedKeyword,
         skipStorage: !userId,
         continueResponse: isContinuation,
         previousResponse: previousResponse

@@ -19,6 +19,11 @@ interface ExportQuery {
   response: string;
   summary: string | null;
   timestamp: string;
+  pubmed_references?: any;
+  keywords?: string[];
+  translated_query?: string;
+  search_type?: string;
+  selected_keyword?: string;
 }
 
 serve(async (req) => {
@@ -126,7 +131,7 @@ serve(async (req) => {
     // Query the database with RLS automatically applied
     const { data: queries, error: queryError } = await supabase
       .from('queries')
-      .select('prompt, response, summary, timestamp')
+      .select('prompt, response, summary, timestamp, pubmed_references, keywords, translated_query, search_type, selected_keyword')
       .eq('user_id', userId)
       .gte('timestamp', fromDate)
       .lte('timestamp', toDate)
@@ -165,17 +170,29 @@ serve(async (req) => {
 
     if (format === 'csv') {
       // Generate CSV with UTF-8 BOM for Excel compatibility
-      const csvHeader = 'Pregunta,Respuesta,Resumen Clínico,Fecha y Hora\n';
+      const csvHeader = 'Pregunta,Respuesta,Resumen Clínico,Referencias PubMed,Palabras Clave,Fecha y Hora\n';
       const csvRows = queries.map((query: ExportQuery) => {
         const escapeCsv = (text: string | null) => {
           if (!text) return '';
           return `"${text.replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, '')}"`;
         };
         
+        const formatReferences = (refs: any) => {
+          if (!refs || !Array.isArray(refs)) return '';
+          return refs.map(ref => `${ref.title || 'Sin título'} (PMID: ${ref.pmid || 'N/A'})`).join('; ');
+        };
+        
+        const formatKeywords = (keywords: string[]) => {
+          if (!keywords || !Array.isArray(keywords)) return '';
+          return keywords.join(', ');
+        };
+        
         return [
           escapeCsv(query.prompt),
           escapeCsv(query.response),
           escapeCsv(query.summary),
+          escapeCsv(formatReferences(query.pubmed_references)),
+          escapeCsv(formatKeywords(query.keywords)),
           escapeCsv(new Date(query.timestamp).toLocaleString('es-ES'))
         ].join(',');
       }).join('\n');
@@ -200,6 +217,11 @@ serve(async (req) => {
           prompt: query.prompt,
           response: query.response,
           summary: query.summary,
+          pubmed_references: query.pubmed_references,
+          keywords: query.keywords,
+          translated_query: query.translated_query,
+          search_type: query.search_type,
+          selected_keyword: query.selected_keyword,
           timestamp: query.timestamp
         }))
       };

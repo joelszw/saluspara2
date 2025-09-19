@@ -492,6 +492,11 @@ serve(async (req) => {
         user_id: userId,
         prompt: rawPrompt,
         response: generated,
+        pubmed_references: pubmedContext && pubmedContext.length > 0 ? pubmedContext : null,
+        keywords: req.body?.keywords || null,
+        translated_query: req.body?.translatedQuery || null,
+        search_type: req.body?.searchType || null,
+        selected_keyword: req.body?.selectedKeyword || null,
       }).select('id');
       
       if (insertRes.error) {

@@ -47,7 +47,7 @@ const NewIndex = () => {
     const loadUserData = async () => {
       const { data, error } = await supabase
         .from("queries")
-        .select("id,prompt,response,timestamp")
+        .select("id,prompt,response,timestamp,summary,pubmed_references")
         .eq("user_id", userId)
         .order("timestamp", { ascending: false })
         .limit(30)
@@ -78,7 +78,7 @@ const NewIndex = () => {
     const [{ count: daily }, { count: monthly }, { data: historyData }] = await Promise.all([
       supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
       supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
-      supabase.from("queries").select("id,prompt,response,timestamp").eq("user_id", userId).order("timestamp", { ascending: false }).limit(30)
+      supabase.from("queries").select("id,prompt,response,timestamp,summary,pubmed_references").eq("user_id", userId).order("timestamp", { ascending: false }).limit(30)
     ])
     
     setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 })

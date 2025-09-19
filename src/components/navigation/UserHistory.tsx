@@ -65,9 +65,9 @@ export function UserHistory({ history }: UserHistoryProps) {
                 </h3>
               </div>
               
-              <ScrollArea className="flex-1 min-h-0 max-h-[300px]">
+              <ScrollArea className="flex-1 min-h-0 max-h-[400px]">
                 <div className="p-4 space-y-2">
-                  {history.slice(0, 10).map((query) => (
+                  {history.map((query) => (
                     <Dialog key={query.id}>
                       <DialogTrigger asChild>
                         <Card 
