@@ -15,6 +15,11 @@ interface QueryItem {
   response: string | null
   summary?: string | null
   timestamp: string
+  pubmed_references?: any[]
+  keywords?: string[]
+  translated_query?: string
+  search_type?: string
+  selected_keyword?: string
 }
 
 interface UserHistoryProps {
@@ -123,6 +128,43 @@ export function UserHistory({ history }: UserHistoryProps) {
                                   <MedicalTermsTooltip 
                                     text={query.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}
                                   />
+                                </div>
+                              </div>
+                            )}
+
+                            {query.pubmed_references && query.pubmed_references.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-blue-600 mb-2">Referencias PubMed</h4>
+                                <div className="text-sm bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
+                                  {query.pubmed_references.slice(0, 3).map((ref: any, index: number) => (
+                                    <div key={index} className="border-b border-blue-200 last:border-b-0 pb-2 last:pb-0">
+                                      <p className="font-medium text-blue-800">{ref.title || 'Sin título'}</p>
+                                      <p className="text-xs text-blue-600">
+                                        PMID: {ref.pmid || 'N/A'} • {ref.year || 'Año no disponible'}
+                                      </p>
+                                    </div>
+                                  ))}
+                                  {query.pubmed_references.length > 3 && (
+                                    <p className="text-xs text-blue-600 italic">
+                                      ... y {query.pubmed_references.length - 3} referencias más
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {query.keywords && query.keywords.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-purple-600 mb-2">Palabras Clave</h4>
+                                <div className="flex flex-wrap gap-1">
+                                  {query.keywords.map((keyword: string, index: number) => (
+                                    <span 
+                                      key={index}
+                                      className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                                    >
+                                      {keyword}
+                                    </span>
+                                  ))}
                                 </div>
                               </div>
                             )}

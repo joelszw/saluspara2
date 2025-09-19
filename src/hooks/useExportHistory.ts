@@ -42,28 +42,36 @@ export const useExportHistory = () => {
 
       console.log(`Exporting ${format} from ${fromDate.toISOString()} to ${toDate.toISOString()}`);
 
-      // Call the export function
-      const { data, error: exportError } = await supabase.functions.invoke('export-history', {
-        body: {
+      // Call the export function and get raw response
+      const response = await fetch(`https://injvwmsqinrcthgdlvux.supabase.co/functions/v1/export-history`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
           userId: user.id,
-          fromDate: fromDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          fromDate: fromDate.toISOString().split('T')[0],
           toDate: toDate.toISOString().split('T')[0],
           format: format
-        }
+        })
       });
 
-      if (exportError) {
-        console.error('Export error:', exportError);
-        throw new Error(exportError.message || 'Error al exportar el historial');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Export error:', errorData);
+        throw new Error(errorData.error || `Error del servidor: ${response.status}`);
       }
 
-      // The data should be the file content
-      if (!data) {
+      // Get the file content as text
+      const fileContent = await response.text();
+      
+      if (!fileContent) {
         throw new Error('No se recibieron datos para exportar');
       }
 
       // Create blob and download
-      const blob = new Blob([data], { 
+      const blob = new Blob([fileContent], { 
         type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8' 
       });
       
