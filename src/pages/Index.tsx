@@ -120,23 +120,34 @@ const Index = () => {
       const text = data?.response as string;
       setResponse(text);
 
-      // Update guest counter
+      const queryId = data?.queryId as string | undefined;
+
+      // If authenticated, generate and store clinical summary server-side
+      if (userId && queryId) {
+        try {
+          await supabase.functions.invoke("generate-summary", {
+            body: { queryId, prompt, response: text }
+          });
+        } catch (e) {
+          console.error("Error generating summary from Index page:", e);
+        }
+      }
+
+      // Update guest counter or reload counts/history for authenticated users
       if (!userId) {
         const used = Number(localStorage.getItem("guest_query_count") || "0");
         const newUsed = used + 1;
         localStorage.setItem("guest_query_count", String(newUsed));
         setGuestUsed(newUsed); // Update state immediately
       } else {
-        // Reload real counts and history from database
+        // Reload real counts and history from database (will include summary if generated)
         const todayStart = new Date(); todayStart.setHours(0,0,0,0);
         const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        
         const [{ count: daily }, { count: monthly }, { data: historyData }] = await Promise.all([
           supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", todayStart.toISOString()),
           supabase.from("queries").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("timestamp", monthStart.toISOString()),
           supabase.from("queries").select("id,prompt,response,timestamp,summary,pubmed_references,keywords,translated_query,search_type,selected_keyword").eq("user_id", userId).order("timestamp", { ascending: false }).limit(30)
         ]);
-        
         setCounts({ daily: daily ?? 0, monthly: monthly ?? 0 });
         if (historyData) setHistory(historyData as QueryItem[]);
       }
