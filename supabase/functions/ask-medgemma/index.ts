@@ -22,7 +22,7 @@ function getCorsHeaders(req: Request) {
   } as const;
 }
 
-interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[]; skipStorage?: boolean; continueResponse?: boolean; previousResponse?: string }
+interface AskRequest { prompt: string; model?: string; captchaToken?: string; pubmedContext?: any[]; skipStorage?: boolean; continueResponse?: boolean; previousResponse?: string; keywords?: string[]; translatedQuery?: string; searchType?: string; selectedKeyword?: string }
 
 // Security: PII detection patterns for medical data
 const PII_PATTERNS = [
@@ -216,7 +216,7 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log('Request body received:', JSON.stringify(requestBody, null, 2));
     
-    const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse } = requestBody as AskRequest;
+    const { prompt, model, captchaToken, pubmedContext, skipStorage, continueResponse, previousResponse, keywords, translatedQuery, searchType, selectedKeyword } = requestBody as AskRequest;
     const rawPrompt = prompt?.trim() ?? "";
     
     // Allow empty prompts only for continuation requests
@@ -493,10 +493,10 @@ serve(async (req) => {
         prompt: rawPrompt,
         response: generated,
         pubmed_references: pubmedContext && pubmedContext.length > 0 ? pubmedContext : null,
-        keywords: req.body?.keywords || null,
-        translated_query: req.body?.translatedQuery || null,
-        search_type: req.body?.searchType || null,
-        selected_keyword: req.body?.selectedKeyword || null,
+        keywords: Array.isArray(keywords) ? keywords : (keywords ? [String(keywords)] : null),
+        translated_query: translatedQuery ?? null,
+        search_type: searchType ?? null,
+        selected_keyword: selectedKeyword ?? null,
       }).select('id');
       
       if (insertRes.error) {
