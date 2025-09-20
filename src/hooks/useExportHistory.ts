@@ -40,7 +40,18 @@ export const useExportHistory = () => {
         throw new Error('El rango de fechas no puede exceder 1 año');
       }
 
-      console.log(`Exporting ${format} from ${fromDate.toISOString()} to ${toDate.toISOString()}`);
+      // Format dates properly to avoid timezone issues
+      const formatDateLocal = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const fromDateStr = formatDateLocal(fromDate);
+      const toDateStr = formatDateLocal(toDate);
+
+      console.log(`Exporting ${format} from ${fromDateStr} to ${toDateStr}`);
 
       // Call the export function and get raw response
       const response = await fetch(`https://injvwmsqinrcthgdlvux.supabase.co/functions/v1/export-history`, {
@@ -51,8 +62,8 @@ export const useExportHistory = () => {
         },
         body: JSON.stringify({
           userId: user.id,
-          fromDate: fromDate.toISOString().split('T')[0],
-          toDate: toDate.toISOString().split('T')[0],
+          fromDate: fromDateStr,
+          toDate: toDateStr,
           format: format
         })
       });
@@ -79,7 +90,7 @@ export const useExportHistory = () => {
       const link = document.createElement('a');
       link.href = url;
       
-      const dateStr = `${fromDate.toISOString().split('T')[0]}-${toDate.toISOString().split('T')[0]}`;
+      const dateStr = `${fromDateStr}-${toDateStr}`;
       link.download = `salustia-historial-${dateStr}.${format}`;
       
       document.body.appendChild(link);
