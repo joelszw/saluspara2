@@ -128,13 +128,17 @@ serve(async (req) => {
 
     console.log(`User ${userId} has subscription: ${userData.subscription_status}`);
 
+    // Build inclusive date range [fromDate 00:00:00, toDate 23:59:59] in UTC safely
+    const startISO = `${fromDate}T00:00:00.000Z`;
+    const endExclusiveISO = new Date(new Date(`${toDate}T00:00:00.000Z`).getTime() + 24 * 60 * 60 * 1000).toISOString();
+
     // Query the database with RLS automatically applied
     const { data: queries, error: queryError } = await supabase
       .from('queries')
       .select('prompt, response, summary, timestamp, pubmed_references, keywords, translated_query, search_type, selected_keyword')
       .eq('user_id', userId)
-      .gte('timestamp', fromDate)
-      .lte('timestamp', toDate)
+      .gte('timestamp', startISO)
+      .lt('timestamp', endExclusiveISO)
       .order('timestamp', { ascending: false });
 
     if (queryError) {
@@ -199,7 +203,7 @@ serve(async (req) => {
       
       content = '\uFEFF' + csvHeader + csvRows; // UTF-8 BOM
       contentType = 'text/csv;charset=utf-8';
-      filename = `salustia-historial-${startDate.toISOString().split('T')[0]}-${endDate.toISOString().split('T')[0]}.csv`;
+      filename = `salustia-historial-${fromDate}-${toDate}.csv`;
     } else {
       // Generate JSON
       const jsonData = {
@@ -228,7 +232,7 @@ serve(async (req) => {
       
       content = JSON.stringify(jsonData, null, 2);
       contentType = 'application/json;charset=utf-8';
-      filename = `salustia-historial-${startDate.toISOString().split('T')[0]}-${endDate.toISOString().split('T')[0]}.json`;
+      filename = `salustia-historial-${fromDate}-${toDate}.json`;
     }
 
     console.log(`Generated ${format} file: ${filename}`);
