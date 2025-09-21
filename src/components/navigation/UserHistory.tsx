@@ -62,8 +62,8 @@ export function UserHistory({ history }: UserHistoryProps) {
             .header {
               text-align: center;
               border-bottom: 2px solid #2563eb;
-              padding-bottom: 20px;
-              margin-bottom: 20px;
+              padding-bottom: 10px;
+              margin-bottom: 15px;
             }
             .section {
               margin-bottom: 15px;
@@ -122,9 +122,12 @@ export function UserHistory({ history }: UserHistoryProps) {
               padding-top: 10px;
             }
             @media print {
-              body { margin: 0; }
+              body { margin: 0; padding: 10px; }
               .no-print { display: none; }
-              .header { page-break-after: avoid; }
+              .header { 
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+              }
               .question-answer { 
                 page-break-inside: avoid;
                 break-inside: avoid;
