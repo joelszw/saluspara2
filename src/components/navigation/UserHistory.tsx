@@ -63,18 +63,13 @@ export function UserHistory({ history }: UserHistoryProps) {
               text-align: center;
               border-bottom: 2px solid #2563eb;
               padding-bottom: 20px;
-              margin-bottom: 30px;
+              margin-bottom: 20px;
             }
             .section {
-              margin-bottom: 20px;
-              page-break-inside: avoid;
-            }
-            .main-content {
-              page-break-inside: avoid;
+              margin-bottom: 15px;
             }
             .question-answer {
-              page-break-inside: avoid;
-              margin-bottom: 30px;
+              margin-bottom: 20px;
             }
             .section-title {
               font-size: 16px;
@@ -129,11 +124,8 @@ export function UserHistory({ history }: UserHistoryProps) {
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
-              .section { 
-                page-break-inside: avoid; 
-                break-inside: avoid;
-              }
-              .question-answer {
+              .header { page-break-after: avoid; }
+              .question-answer { 
                 page-break-inside: avoid;
                 break-inside: avoid;
               }
@@ -141,9 +133,9 @@ export function UserHistory({ history }: UserHistoryProps) {
                 page-break-after: avoid;
                 break-after: avoid;
               }
-              .content {
-                page-break-before: avoid;
-                break-before: avoid;
+              .reference-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
               }
             }
           </style>
