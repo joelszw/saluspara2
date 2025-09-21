@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { History, Clock, ChevronDown } from "lucide-react"
+import { History, Clock, ChevronDown, Printer } from "lucide-react"
 import { MedicalTermsTooltip } from "@/components/medical/MedicalTermsTooltip"
 import { ExportHistoryControls } from "@/components/navigation/ExportHistoryControls"
 
@@ -39,6 +39,150 @@ export function UserHistory({ history }: UserHistoryProps) {
       .replace(/\*\s/g, '<br>• ')
       .replace(/(\d+\.\s)/g, '<br>$1')
       .replace(/^\s*<br>/, '')
+  }
+
+  const handlePrint = (query: QueryItem) => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Consulta Médica - ${new Date(query.timestamp).toLocaleDateString('es-ES')}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .section {
+              margin-bottom: 25px;
+              page-break-inside: avoid;
+            }
+            .section-title {
+              font-size: 16px;
+              font-weight: bold;
+              color: #2563eb;
+              margin-bottom: 10px;
+              border-left: 4px solid #2563eb;
+              padding-left: 10px;
+            }
+            .content {
+              background: #f8fafc;
+              padding: 15px;
+              border-radius: 5px;
+              border: 1px solid #e2e8f0;
+            }
+            .references {
+              background: #eff6ff;
+              border: 1px solid #dbeafe;
+            }
+            .reference-item {
+              margin-bottom: 10px;
+              padding-bottom: 10px;
+              border-bottom: 1px solid #dbeafe;
+            }
+            .reference-item:last-child {
+              border-bottom: none;
+              margin-bottom: 0;
+            }
+            .keywords {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 5px;
+            }
+            .keyword {
+              background: #f3e8ff;
+              color: #7c3aed;
+              padding: 3px 8px;
+              border-radius: 15px;
+              font-size: 12px;
+            }
+            .timestamp {
+              text-align: right;
+              color: #64748b;
+              font-size: 12px;
+              margin-top: 30px;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 10px;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Consulta Médica</h1>
+            <p>Sistema de Asistencia Médica IA</p>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Pregunta:</div>
+            <div class="content">${query.prompt}</div>
+          </div>
+          
+          ${query.response ? `
+          <div class="section">
+            <div class="section-title">Respuesta:</div>
+            <div class="content">${formatResponse(query.response)}</div>
+          </div>
+          ` : ''}
+          
+          ${query.summary ? `
+          <div class="section">
+            <div class="section-title">Resumen Clínico:</div>
+            <div class="content">${query.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+          </div>
+          ` : ''}
+          
+          ${query.pubmed_references && query.pubmed_references.length > 0 ? `
+          <div class="section">
+            <div class="section-title">Referencias PubMed:</div>
+            <div class="content references">
+              ${query.pubmed_references.map((ref: any) => `
+                <div class="reference-item">
+                  <strong>${ref.title || 'Sin título'}</strong><br>
+                  <small>PMID: ${ref.pmid || 'N/A'} • ${ref.year || 'Año no disponible'}</small>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${query.keywords && query.keywords.length > 0 ? `
+          <div class="section">
+            <div class="section-title">Palabras Clave:</div>
+            <div class="content">
+              <div class="keywords">
+                ${query.keywords.map((keyword: string) => `<span class="keyword">${keyword}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          
+          <div class="timestamp">
+            Fecha de consulta: ${new Date(query.timestamp).toLocaleString('es-ES')}
+          </div>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
   }
 
   return (
@@ -96,10 +240,21 @@ export function UserHistory({ history }: UserHistoryProps) {
                         </Card>
                       </DialogTrigger>
                       
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
-                        <DialogHeader>
-                          <DialogTitle className="text-left">Consulta médica</DialogTitle>
-                        </DialogHeader>
+                       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+                         <DialogHeader>
+                           <DialogTitle className="text-left flex items-center justify-between">
+                             Consulta médica
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handlePrint(query)}
+                               className="flex items-center gap-2"
+                             >
+                               <Printer className="h-4 w-4" />
+                               Imprimir
+                             </Button>
+                           </DialogTitle>
+                         </DialogHeader>
                         <ScrollArea className="max-h-[60vh]">
                           <div className="space-y-4">
                             <div>
