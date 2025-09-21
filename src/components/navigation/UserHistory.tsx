@@ -65,6 +65,8 @@ export function UserHistory({ history }: UserHistoryProps) {
               padding-bottom: 10px;
               margin-bottom: 15px;
             }
+            .header h1 { margin: 0 0 6px; }
+            .header p { margin: 0; color: #64748b; }
             .section {
               margin-bottom: 15px;
             }
@@ -127,10 +129,13 @@ export function UserHistory({ history }: UserHistoryProps) {
               .header { 
                 margin-bottom: 10px;
                 padding-bottom: 8px;
-              }
-              .question-answer { 
                 page-break-inside: avoid;
                 break-inside: avoid;
+                page-break-after: avoid;
+              }
+              .question-answer .section:first-child {
+                page-break-after: avoid;
+                break-after: avoid;
               }
               .section-title {
                 page-break-after: avoid;
