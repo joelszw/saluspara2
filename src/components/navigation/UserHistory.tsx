@@ -66,8 +66,15 @@ export function UserHistory({ history }: UserHistoryProps) {
               margin-bottom: 30px;
             }
             .section {
-              margin-bottom: 25px;
+              margin-bottom: 20px;
               page-break-inside: avoid;
+            }
+            .main-content {
+              page-break-inside: avoid;
+            }
+            .question-answer {
+              page-break-inside: avoid;
+              margin-bottom: 30px;
             }
             .section-title {
               font-size: 16px;
@@ -76,12 +83,14 @@ export function UserHistory({ history }: UserHistoryProps) {
               margin-bottom: 10px;
               border-left: 4px solid #2563eb;
               padding-left: 10px;
+              page-break-after: avoid;
             }
             .content {
               background: #f8fafc;
               padding: 15px;
               border-radius: 5px;
               border: 1px solid #e2e8f0;
+              page-break-before: avoid;
             }
             .references {
               background: #eff6ff;
@@ -91,6 +100,7 @@ export function UserHistory({ history }: UserHistoryProps) {
               margin-bottom: 10px;
               padding-bottom: 10px;
               border-bottom: 1px solid #dbeafe;
+              page-break-inside: avoid;
             }
             .reference-item:last-child {
               border-bottom: none;
@@ -119,6 +129,22 @@ export function UserHistory({ history }: UserHistoryProps) {
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
+              .section { 
+                page-break-inside: avoid; 
+                break-inside: avoid;
+              }
+              .question-answer {
+                page-break-inside: avoid;
+                break-inside: avoid;
+              }
+              .section-title {
+                page-break-after: avoid;
+                break-after: avoid;
+              }
+              .content {
+                page-break-before: avoid;
+                break-before: avoid;
+              }
             }
           </style>
         </head>
@@ -128,17 +154,19 @@ export function UserHistory({ history }: UserHistoryProps) {
             <p>Sistema de Asistencia Médica IA</p>
           </div>
           
-          <div class="section">
-            <div class="section-title">Pregunta:</div>
-            <div class="content">${query.prompt}</div>
+          <div class="question-answer">
+            <div class="section">
+              <div class="section-title">Pregunta:</div>
+              <div class="content">${query.prompt}</div>
+            </div>
+            
+            ${query.response ? `
+            <div class="section">
+              <div class="section-title">Respuesta:</div>
+              <div class="content">${formatResponse(query.response)}</div>
+            </div>
+            ` : ''}
           </div>
-          
-          ${query.response ? `
-          <div class="section">
-            <div class="section-title">Respuesta:</div>
-            <div class="content">${formatResponse(query.response)}</div>
-          </div>
-          ` : ''}
           
           ${query.summary ? `
           <div class="section">
