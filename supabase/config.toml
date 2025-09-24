@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.export-history]
 verify_jwt = true
+
+[functions.promote-admin]
+verify_jwt = false

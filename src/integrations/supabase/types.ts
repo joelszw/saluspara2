@@ -159,6 +159,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      promote_to_admin: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
     }
     Enums: {
       user_role: "free" | "premium" | "test" | "admin"

@@ -8,6 +8,7 @@ import { Community } from "@/components/sections/Community"
 import { LLMsShowcase } from "@/components/sections/LLMsShowcase"
 import { Freemium } from "@/components/sections/Freemium"
 import { FooterLegal } from "@/components/sections/FooterLegal"
+import { AdminPromoter } from "@/components/admin/AdminPromoter"
 
 interface QueryItem {
   id: string
@@ -93,6 +94,13 @@ const NewIndex = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header userEmail={userEmail} history={history} />
+      
+      {/* Show admin promoter for specific case */}
+      {userEmail === 'admin@aware.doctor' && (
+        <div className="pt-20">
+          <AdminPromoter />
+        </div>
+      )}
       
       <main>
         <Hero 
