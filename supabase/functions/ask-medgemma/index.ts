@@ -256,10 +256,10 @@ serve(async (req) => {
       if (userId) {
         const { data: userRow } = await supabase
           .from("users")
-          .select("subscription_status")
+          .select("subscription_status, role")
           .eq("id", userId)
           .maybeSingle();
-        if (userRow?.subscription_status === "active") plan = "pro";
+        if (userRow?.subscription_status === "active" || userRow?.role === "premium") plan = "pro";
       }
     }
 
@@ -353,39 +353,33 @@ serve(async (req) => {
       }
     }
 
-    // Limits per plan
-    const limits = plan === "pro"
-      ? { daily: 10, monthly: 200 }
-      : { daily: 3, monthly: 20 };
-
-    // Count queries for authenticated users
-    if (userId) {
-      const { count: dailyCount, error: dailyErr } = await supabase
-        .from("queries")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .gte("timestamp", startOfDay());
-      if (dailyErr) throw dailyErr;
-
-      const { count: monthlyCount, error: monthErr } = await supabase
-        .from("queries")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .gte("timestamp", startOfMonth());
-      if (monthErr) throw monthErr;
-
-      if ((dailyCount ?? 0) >= limits.daily) {
+    // Check usage limits for authenticated users using the new function
+    if (userId && !continueResponse) {
+      const { data: limitCheck, error: limitError } = await supabase
+        .rpc('check_usage_limits', { user_id: userId });
+      
+      if (limitError) {
+        console.error('Error checking usage limits:', limitError);
+        throw limitError;
+      }
+      
+      if (!limitCheck.allowed) {
+        const errorMessages = {
+          'Daily limit exceeded': 'Has alcanzado el límite diario de consultas.',
+          'Monthly limit exceeded': 'Has alcanzado el límite mensual de consultas.',
+          'User not found': 'Usuario no encontrado.'
+        };
+        
         return new Response(
-          JSON.stringify({ error: `Has alcanzado el límite diario (${limits.daily}).` }),
+          JSON.stringify({ 
+            error: errorMessages[limitCheck.reason as keyof typeof errorMessages] || limitCheck.reason,
+            usageInfo: limitCheck
+          }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if ((monthlyCount ?? 0) >= limits.monthly) {
-        return new Response(
-          JSON.stringify({ error: `Has alcanzado el límite mensual (${limits.monthly}).` }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      
+      console.log('Usage check passed:', limitCheck);
     }
 
     let systemContent = "Eres un asistente de traumatología especializado en ortopedia.";

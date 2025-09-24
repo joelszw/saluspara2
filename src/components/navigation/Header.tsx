@@ -36,6 +36,11 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
           <a href="/contacto" className="text-sm hover:text-primary transition-colors">
             {t('nav.contact')}
           </a>
+          {userEmail && (
+            <a href="/admin" className="text-sm hover:text-primary transition-colors">
+              Admin
+            </a>
+          )}
           <a 
             href="https://aware.doctor" 
             target="_blank" 
