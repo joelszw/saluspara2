@@ -63,9 +63,18 @@ export default function Admin() {
 
       setUserRole(userData.role);
 
-      // Check if this is the first login and needs password change
-      if (user.email === 'admin@aware.doctor' && user.user_metadata?.force_password_change) {
-        setForcePasswordChange(true);
+      // Check if this is the initial admin user and needs password change
+      // Check user metadata for force_password_change flag
+      if (user.email === 'admin@aware.doctor') {
+        // Check if password was recently set or if it's still the default
+        const createdAt = new Date(user.created_at);
+        const now = new Date();
+        const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        
+        // If account is less than 24 hours old, force password change
+        if (hoursSinceCreation < 24 || user.user_metadata?.force_password_change) {
+          setForcePasswordChange(true);
+        }
       }
 
     } catch (error) {

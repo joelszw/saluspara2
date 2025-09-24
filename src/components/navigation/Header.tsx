@@ -6,6 +6,7 @@ import { LanguageToggle } from "@/components/ui/language-toggle"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/integrations/supabase/client"
 import { AuthForm } from "@/components/auth/AuthForm"
+import { ChangePassword } from "@/components/auth/ChangePassword"
 import { UserHistory } from "./UserHistory"
 
 interface QueryItem {
@@ -58,6 +59,7 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
           {userEmail ? (
             <>
               <UserHistory history={history} />
+              <ChangePassword userEmail={userEmail} />
               <span className="hidden md:inline text-sm text-muted-foreground mr-2">
                 {userEmail}
               </span>

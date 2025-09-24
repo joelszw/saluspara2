@@ -27,10 +27,10 @@ export function ForcePasswordChange({ onPasswordChanged }: ForcePasswordChangePr
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: "Error",
-        description: "La contraseña debe tener al menos 6 caracteres",
+        description: "La contraseña debe tener al menos 8 caracteres",
         variant: "destructive",
       });
       return;
@@ -40,6 +40,16 @@ export function ForcePasswordChange({ onPasswordChanged }: ForcePasswordChangePr
       toast({
         title: "Error",
         description: "Las contraseñas no coinciden",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify it's not the default password
+    if (password === 'admin') {
+      toast({
+        title: "Error",
+        description: "No puedes usar 'admin' como contraseña. Elige una contraseña segura.",
         variant: "destructive",
       });
       return;
@@ -123,7 +133,8 @@ export function ForcePasswordChange({ onPasswordChanged }: ForcePasswordChangePr
           <div className="text-xs text-muted-foreground space-y-1">
             <p>Requisitos de la contraseña:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Mínimo 6 caracteres</li>
+              <li>Mínimo 8 caracteres</li>
+              <li>No puede ser "admin"</li>
               <li>Se recomienda incluir números y símbolos</li>
             </ul>
           </div>

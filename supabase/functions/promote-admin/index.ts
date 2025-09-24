@@ -64,6 +64,18 @@ serve(async (req) => {
       });
     }
 
+    // Mark user as needing password change
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      (await supabase.from('users').select('id').eq('email', email).single()).data?.id,
+      {
+        user_metadata: { force_password_change: true }
+      }
+    );
+
+    if (updateError) {
+      console.warn('Could not set force_password_change flag:', updateError);
+    }
+
     return new Response(JSON.stringify({ success: true, message: `User ${email} promoted to admin` }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
