@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NewIndex from "./pages/NewIndex";
 import Contact from "./pages/Contact";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import "./lib/i18n";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<NewIndex />} />
             <Route path="/contacto" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
