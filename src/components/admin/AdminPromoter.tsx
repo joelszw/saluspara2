@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, CheckCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function AdminPromoter() {
   const [loading, setLoading] = useState(false);
@@ -13,18 +14,12 @@ export function AdminPromoter() {
     try {
       setLoading(true);
       
-      const response = await fetch('/functions/v1/promote-admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: 'admin@aware.doctor' }),
+      const { data, error } = await supabase.functions.invoke('promote-admin', {
+        body: { email: 'admin@aware.doctor' },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error promoting user');
+      if (error) {
+        throw new Error(error.message || 'Error promoting user');
       }
 
       setSuccess(true);
