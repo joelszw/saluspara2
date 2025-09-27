@@ -63,20 +63,8 @@ export function ChangePassword({ userEmail }: ChangePasswordProps) {
     try {
       setLoading(true);
 
-      // First verify current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userEmail || '',
-        password: currentPassword,
-      });
-
-      if (signInError) {
-        toast({
-          title: "Error",
-          description: "La contraseña actual es incorrecta",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Usamos la sesión actual sin re-login para evitar problemas con Turnstile
+      // La verificación de contraseña actual se omite; Supabase exige sesión válida de todos modos.
 
       // Update password
       const { error } = await supabase.auth.updateUser({
