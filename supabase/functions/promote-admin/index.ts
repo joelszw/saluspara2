@@ -42,9 +42,14 @@ serve(async (req) => {
       });
     }
 
-    // Only allow promotion of admin@aware.doctor for security
-    if (email !== "admin@aware.doctor") {
-      return new Response(JSON.stringify({ error: "Only admin@aware.doctor can be promoted through this function" }), {
+    // Only allow promotion for specific emails (allowlist) for security
+    const allowedEmails = (Deno.env.get("ALLOWED_PROMOTION_EMAILS") || "admin@aware.doctor,joelszw@aware.doctor")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (!allowedEmails.includes(String(email).toLowerCase())) {
+      return new Response(JSON.stringify({ error: "Email not allowed for promotion" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

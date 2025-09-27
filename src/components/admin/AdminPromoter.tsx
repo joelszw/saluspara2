@@ -13,9 +13,12 @@ export function AdminPromoter() {
   const promoteAdmin = async () => {
     try {
       setLoading(true);
+
+      const { data: userResult } = await supabase.auth.getUser();
+      const targetEmail = userResult?.user?.email || 'admin@aware.doctor';
       
       const { data, error } = await supabase.functions.invoke('promote-admin', {
-        body: { email: 'admin@aware.doctor' },
+        body: { email: targetEmail },
       });
 
       if (error) {
@@ -25,7 +28,7 @@ export function AdminPromoter() {
       setSuccess(true);
       toast({
         title: "¡Éxito!",
-        description: "El usuario admin@aware.doctor ha sido promovido a administrador",
+        description: `El usuario ${targetEmail} ha sido promovido a administrador`,
       });
 
     } catch (error: any) {
@@ -77,7 +80,7 @@ export function AdminPromoter() {
       </CardHeader>
       <CardContent className="text-center space-y-4">
         <p className="text-muted-foreground">
-          El usuario admin@aware.doctor existe pero necesita permisos de administrador.
+          Pulsa el botón para otorgar permisos de administrador a tu cuenta actual.
         </p>
         <Button 
           onClick={promoteAdmin} 
