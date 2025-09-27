@@ -184,9 +184,24 @@ export function UsersManagement() {
 
       if (error) throw error;
 
+      // If promoting to admin, set force password change flag
+      if (newRole === 'admin') {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', userId)
+          .single();
+
+        if (userData?.email) {
+          await supabase.auth.admin.updateUserById(userId, {
+            user_metadata: { force_password_change: true }
+          });
+        }
+      }
+
       toast({
         title: "Usuario Actualizado",
-        description: "El rol del usuario ha sido actualizado",
+        description: `El rol del usuario ha sido actualizado${newRole === 'admin' ? '. Deberá cambiar la contraseña en el próximo login.' : ''}`,
       });
 
       fetchUsers();
@@ -195,6 +210,34 @@ export function UsersManagement() {
       toast({
         title: "Error",
         description: "No se pudo actualizar el usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const promoteJoelToAdmin = async () => {
+    try {
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', 'joelszw@aware.doctor')
+        .single();
+
+      if (fetchError || !userData) {
+        toast({
+          title: "Error",
+          description: "No se encontró el usuario joelszw@aware.doctor",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await updateUserRole(userData.id, 'admin');
+    } catch (error: any) {
+      console.error('Error promoting Joel:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo promover el usuario",
         variant: "destructive",
       });
     }
@@ -327,6 +370,10 @@ export function UsersManagement() {
           <Button onClick={createJoelAdmin} variant="secondary" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Crear Admin Joel
+          </Button>
+          <Button onClick={promoteJoelToAdmin} variant="destructive" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Promover Joel a Admin
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
