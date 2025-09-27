@@ -95,8 +95,8 @@ const NewIndex = () => {
     <div className="min-h-screen bg-background">
       <Header userEmail={userEmail} history={history} />
       
-      {/* Show admin promoter for specific case */}
-      {userEmail === 'admin@aware.doctor' && (
+      {/* Show admin promoter for specific users who need admin access */}
+      {(userEmail === 'admin@aware.doctor' || userEmail === 'joelszw@aware.doctor') && (
         <div className="pt-20">
           <AdminPromoter />
         </div>
