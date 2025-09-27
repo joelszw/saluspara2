@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.promote-admin]
 verify_jwt = false
+
+[functions.send-recovery-email]
+verify_jwt = true

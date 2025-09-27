@@ -58,13 +58,40 @@ export function ForcePasswordChange({ onPasswordChanged }: ForcePasswordChangePr
     try {
       setLoading(true);
 
-      // Update password
+      // First, get the current user to make sure we're authenticated
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Update password without requiring current password (admin flow)
       const { error } = await supabase.auth.updateUser({
         password: password,
         data: { force_password_change: false }
       });
 
-      if (error) throw error;
+      if (error) {
+        // If normal update fails, try recovery flow
+        if (error.message.includes('session') || error.message.includes('auth')) {
+          toast({
+            title: "Sesión Expirada",
+            description: "Tu sesión ha expirado. Por favor inicia sesión nuevamente con tu contraseña temporal para cambiarla.",
+            variant: "destructive",
+          });
+          
+          // Sign out and redirect to login
+          await supabase.auth.signOut();
+          window.location.href = '/';
+          return;
+        }
+        throw error;
+      }
+
+      toast({
+        title: "¡Éxito!",
+        description: "Contraseña cambiada correctamente",
+      });
 
       onPasswordChanged();
     } catch (error: any) {
