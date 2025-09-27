@@ -419,7 +419,7 @@ serve(async (req) => {
           const { articles, keywords, translatedQuery } = pubmedResponse.data;
           if (articles && articles.length > 0) {
             console.log(`Found ${articles.length} PubMed articles for keywords: ${keywords?.join(', ')}`);
-            pubmedSearchContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article, index) => 
+            pubmedSearchContext = `\n\nReferencias científicas recientes (${articles.length} artículos encontrados):\n${articles.map((article: any, index: number) => 
               `${index + 1}. ${article.title} (${article.year}) - ${article.abstract?.substring(0, 150) || 'Sin resumen disponible'}...`
             ).join('\n')}`;
             pubmedReferences = articles;
@@ -428,7 +428,7 @@ serve(async (req) => {
           console.warn('PubMed search returned error:', pubmedResponse.error);
         }
       } catch (pubmedError) {
-        console.warn('PubMed search failed, continuing without references:', pubmedError.message);
+        console.warn('PubMed search failed, continuing without references:', (pubmedError as Error).message);
       }
 
       // Add PubMed context to system prompt

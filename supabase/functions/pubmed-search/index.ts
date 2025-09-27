@@ -578,7 +578,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Failed to search PubMed',
-        details: error.message,
+        details: (error as Error).message,
         articles: [],
         keywords: [],
         translatedQuery: ''
