@@ -79,7 +79,8 @@ export function UsersManagement() {
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: newUser.email,
         password: newUser.password,
-        email_confirm: true
+        email_confirm: true,
+        user_metadata: newUser.role === 'admin' ? { force_password_change: true } : {}
       });
 
       if (authError) throw authError;
@@ -99,7 +100,7 @@ export function UsersManagement() {
 
       toast({
         title: "Usuario Creado",
-        description: "El usuario ha sido creado exitosamente",
+        description: `El usuario ${newUser.role === 'admin' ? 'administrador' : ''} ha sido creado exitosamente${newUser.role === 'admin' ? '. Deberá cambiar la contraseña en el primer login.' : ''}`,
       });
 
       setNewUser({ email: '', password: '', role: 'free' });
@@ -110,6 +111,62 @@ export function UsersManagement() {
       toast({
         title: "Error",
         description: error.message || "No se pudo crear el usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createJoelAdmin = async () => {
+    try {
+      // Check if user already exists
+      const { data: existingUsers } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', 'joelszw@aware.doctor');
+
+      if (existingUsers && existingUsers.length > 0) {
+        toast({
+          title: "Usuario Ya Existe",
+          description: "El usuario joelszw@aware.doctor ya está registrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create user in auth system
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: 'joelszw@aware.doctor',
+        password: '12345678',
+        email_confirm: true,
+        user_metadata: { force_password_change: true }
+      });
+
+      if (authError) throw authError;
+
+      // Create user in public.users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: 'joelszw@aware.doctor',
+          role: 'admin',
+          auth_method: 'email',
+          subscription_status: 'admin'
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Administrador Creado",
+        description: "Usuario joelszw@aware.doctor creado como administrador. Deberá cambiar la contraseña en el primer login.",
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error creating Joel admin:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo crear el usuario administrador",
         variant: "destructive",
       });
     }
@@ -266,6 +323,10 @@ export function UsersManagement() {
           <Button onClick={fetchUsers} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
+          </Button>
+          <Button onClick={createJoelAdmin} variant="secondary" size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Admin Joel
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
