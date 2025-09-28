@@ -54,9 +54,25 @@ function detectPII(text: string): { hasPII: boolean; patterns: string[] } {
   return { hasPII, patterns: foundPatterns };
 }
 
-// Security: Log security events
-function logSecurityEvent(event: string, details: any) {
+// Enhanced security: Log security events to database
+async function logSecurityEvent(event: string, details: any, userId?: string, clientIP?: string) {
   console.warn(`[SECURITY] ${event}:`, JSON.stringify(details));
+  
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    await supabase.rpc('log_security_event', {
+      event_type: event,
+      user_id: userId || null,
+      ip_address: clientIP || null,
+      details: details || null
+    });
+  } catch (error) {
+    console.error('Failed to log security event to database:', error);
+  }
 }
 
 // Security: Rate limiting by IP for anonymous users
@@ -269,12 +285,10 @@ serve(async (req) => {
     // Security: PII detection for all queries
     const piiCheck = detectPII(rawPrompt);
     if (piiCheck.hasPII) {
-      logSecurityEvent("PII_DETECTED", {
-        userId: userId || "anonymous",
-        ip: clientIP,
+      await logSecurityEvent("PII_DETECTED", {
         patterns: piiCheck.patterns,
         promptLength: rawPrompt.length
-      });
+      }, userId || undefined, clientIP);
       
       // For anonymous users, reject queries with PII
       if (!userId) {
@@ -292,10 +306,9 @@ serve(async (req) => {
     if (!userId && !continueResponse) {
       // Security: Apply IP-based rate limiting for anonymous users
       if (!checkIPRateLimit(clientIP)) {
-        logSecurityEvent("IP_RATE_LIMIT_EXCEEDED", {
-          ip: clientIP,
+        await logSecurityEvent("IP_RATE_LIMIT_EXCEEDED", {
           promptLength: rawPrompt.length
-        });
+        }, undefined, clientIP);
         return new Response(JSON.stringify({ error: "Demasiadas solicitudes desde esta dirección IP. Intente de nuevo en unos minutos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -329,10 +342,9 @@ serve(async (req) => {
       });
       const verifyData = await verifyRes.json();
       if (!verifyData.success) {
-        logSecurityEvent("CAPTCHA_FAILED", {
-          ip: clientIP,
+        await logSecurityEvent("CAPTCHA_FAILED", {
           error: verifyData
-        });
+        }, undefined, clientIP);
         return new Response(JSON.stringify({ error: "Captcha inválido." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -342,10 +354,9 @@ serve(async (req) => {
       console.log('Skipping captcha validation for continuation request');
       // For continuation requests, only apply basic rate limiting
       if (!checkIPRateLimit(clientIP)) {
-        logSecurityEvent("IP_RATE_LIMIT_EXCEEDED_CONTINUATION", {
-          ip: clientIP,
+        await logSecurityEvent("IP_RATE_LIMIT_EXCEEDED_CONTINUATION", {
           promptLength: rawPrompt.length
-        });
+        }, undefined, clientIP);
         return new Response(JSON.stringify({ error: "Demasiadas solicitudes desde esta dirección IP. Intente de nuevo en unos minutos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -353,10 +364,13 @@ serve(async (req) => {
       }
     }
 
-    // Check usage limits for authenticated users using the new function
+    // Check usage limits for authenticated users using the enhanced secure function
     if (userId && !continueResponse) {
       const { data: limitCheck, error: limitError } = await supabase
-        .rpc('check_usage_limits', { user_id: userId });
+        .rpc('check_usage_limits_secure', { 
+          user_id: userId,
+          client_ip: clientIP 
+        });
       
       if (limitError) {
         console.error('Error checking usage limits:', limitError);

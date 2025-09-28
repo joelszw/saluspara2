@@ -5,12 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, Edit, RefreshCw, Plus, Users } from 'lucide-react';
+import { Trash2, Edit, RefreshCw, Plus, Users, UserPlus } from 'lucide-react';
 
 interface UserData {
   id: string;
@@ -116,60 +116,53 @@ export function UsersManagement() {
     }
   };
 
-  const createJoelAdmin = async () => {
-    try {
-      // Check if user already exists
-      const { data: existingUsers } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', 'joelszw@aware.doctor');
+  // State for promote to admin dialog
+  const [promoteEmail, setPromoteEmail] = useState("");
+  const [showPromoteDialog, setShowPromoteDialog] = useState(false);
 
-      if (existingUsers && existingUsers.length > 0) {
+  const promoteUserToAdmin = async (email: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('promote-admin', {
+        body: { email }
+      });
+
+      if (error) {
         toast({
-          title: "Usuario Ya Existe",
-          description: "El usuario joelszw@aware.doctor ya está registrado",
+          title: "Error",
+          description: error.message || "No se pudo promover el usuario a administrador",
           variant: "destructive",
         });
         return;
       }
 
-      // Create user in auth system
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: 'joelszw@aware.doctor',
-        password: '12345678',
-        email_confirm: true,
-        user_metadata: { force_password_change: true }
-      });
-
-      if (authError) throw authError;
-
-      // Create user in public.users table
-      const { error: dbError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          email: 'joelszw@aware.doctor',
-          role: 'admin',
-          auth_method: 'email',
-          subscription_status: 'admin'
-        });
-
-      if (dbError) throw dbError;
-
       toast({
-        title: "Administrador Creado",
-        description: "Usuario joelszw@aware.doctor creado como administrador. Deberá cambiar la contraseña en el primer login.",
+        title: "Usuario Promovido",
+        description: `Usuario ${email} promovido a administrador exitosamente`,
       });
-
+      
       fetchUsers();
     } catch (error: any) {
-      console.error('Error creating Joel admin:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear el usuario administrador",
+        description: error.message || "No se pudo promover el usuario a administrador",
         variant: "destructive",
       });
     }
+  };
+
+  const handlePromoteToAdmin = async () => {
+    if (!promoteEmail.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingrese una dirección de email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await promoteUserToAdmin(promoteEmail);
+    setPromoteEmail("");
+    setShowPromoteDialog(false);
   };
 
   const updateUserRole = async (userId: string, newRole: 'free' | 'premium' | 'test' | 'admin') => {
@@ -215,33 +208,6 @@ export function UsersManagement() {
     }
   };
 
-  const promoteJoelToAdmin = async () => {
-    try {
-      const { data: userData, error: fetchError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', 'joelszw@aware.doctor')
-        .single();
-
-      if (fetchError || !userData) {
-        toast({
-          title: "Error",
-          description: "No se encontró el usuario joelszw@aware.doctor",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await updateUserRole(userData.id, 'admin');
-    } catch (error: any) {
-      console.error('Error promoting Joel:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo promover el usuario",
-        variant: "destructive",
-      });
-    }
-  };
 
   const deleteUser = async (userId: string) => {
     try {
@@ -385,13 +351,9 @@ export function UsersManagement() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
           </Button>
-          <Button onClick={createJoelAdmin} variant="secondary" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Crear Admin Joel
-          </Button>
-          <Button onClick={promoteJoelToAdmin} variant="destructive" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Promover Joel a Admin
+          <Button onClick={() => setShowPromoteDialog(true)} variant="secondary" size="sm">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Promover a Admin
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -573,6 +535,35 @@ export function UsersManagement() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Promote to Admin Dialog */}
+      <Dialog open={showPromoteDialog} onOpenChange={setShowPromoteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Promover Usuario a Administrador</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="promoteEmail">Dirección de Email</Label>
+              <Input
+                id="promoteEmail"
+                type="email"
+                value={promoteEmail}
+                onChange={(e) => setPromoteEmail(e.target.value)}
+                placeholder="usuario@ejemplo.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPromoteDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handlePromoteToAdmin} disabled={loading}>
+              Promover a Admin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

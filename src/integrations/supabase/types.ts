@@ -155,9 +155,22 @@ export type Database = {
         Args: { user_id: string }
         Returns: Json
       }
+      check_usage_limits_secure: {
+        Args: { client_ip?: string; user_id: string }
+        Returns: Json
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      log_security_event: {
+        Args: {
+          details?: Json
+          event_type: string
+          ip_address?: string
+          user_id?: string
+        }
+        Returns: undefined
       }
       promote_to_admin: {
         Args: { user_email: string }

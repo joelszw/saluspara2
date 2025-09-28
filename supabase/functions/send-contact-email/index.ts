@@ -1,5 +1,27 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+// Enhanced security logging
+async function logSecurityEvent(eventType: string, details: any, ip?: string) {
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    await supabase.rpc('log_security_event', {
+      event_type: eventType,
+      user_id: null,
+      ip_address: ip || null,
+      details: details || null
+    });
+    
+    console.warn(`[SECURITY] ${eventType}:`, JSON.stringify(details));
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+  }
+}
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -77,30 +99,74 @@ serve(async (req) => {
     });
     const verifyData = await verifyRes.json();
     if (!verifyData.success) {
+      await logSecurityEvent('CAPTCHA_FAILED', {
+        error: verifyData
+      }, ip);
+      
       return new Response(JSON.stringify({ error: "Captcha inválido." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Basic input validation
+    // Enhanced input validation
     if (!nombre || !apellido || !pais || !email || !consulta) {
+      await logSecurityEvent('INCOMPLETE_CONTACT_FORM', {
+        missing_fields: {
+          nombre: !nombre,
+          apellido: !apellido,
+          pais: !pais,
+          email: !email,
+          consulta: !consulta
+        }
+      }, ip);
+      
       return new Response(JSON.stringify({ error: "Todos los campos obligatorios deben estar completos." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    
     if (!isValidEmail(email)) {
+      await logSecurityEvent('INVALID_EMAIL_CONTACT', {
+        email: email.substring(0, 10) + '...'
+      }, ip);
+      
       return new Response(JSON.stringify({ error: "Correo inválido." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    
     if (consulta.length > 2000) {
+      await logSecurityEvent('OVERSIZED_CONTACT_MESSAGE', {
+        length: consulta.length
+      }, ip);
+      
       return new Response(JSON.stringify({ error: "La consulta es demasiado larga (máx. 2000 caracteres)." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Additional security checks for potential spam
+    const suspiciousPatterns = [
+      /https?:\/\/[^\s]+/gi, // URLs
+      /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, // Credit cards
+      /<script|javascript:|data:text\/html/gi // Script injections
+    ];
+    
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(consulta) || pattern.test(nombre) || pattern.test(apellido)) {
+        await logSecurityEvent('SUSPICIOUS_CONTACT_CONTENT', {
+          pattern: pattern.toString()
+        }, ip);
+        
+        return new Response(JSON.stringify({ error: "Contenido no permitido detectado." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const html = `
