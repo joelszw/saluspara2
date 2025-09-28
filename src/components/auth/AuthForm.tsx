@@ -20,6 +20,7 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [resetKey, setResetKey] = useState(0)
 
   const handleEmailAuth = async () => {
     setLoading(true)
@@ -53,9 +54,28 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
       }
       onDone()
     } catch (e: any) {
+      console.error('Auth error:', e);
+      
+      // Reset Turnstile captcha on error by forcing re-render
+      setCaptchaToken(null);
+      setResetKey(prev => prev + 1);
+      
+      
+      let errorMessage = e.message || "Intenta de nuevo";
+      
+      // Handle specific Turnstile errors
+      if (e.message?.includes('captcha')) {
+        errorMessage = "Captcha expirado o inválido. Por favor completa el captcha nuevamente.";
+      } else if (e.message?.includes('timeout-or-duplicate')) {
+        errorMessage = "Demasiados intentos. Espera un momento e intenta nuevamente.";
+      } else if (e.message?.includes('Invalid login credentials')) {
+        errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
+      }
+      
       toast({ 
         title: "Error", 
-        description: e.message || "Intenta de nuevo" 
+        description: errorMessage,
+        variant: "destructive"
       })
     } finally {
       setLoading(false)
@@ -110,10 +130,23 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
       <div className="space-y-2">
         {TURNSTILE_SITE_KEY ? (
           <Turnstile
+            key={resetKey}
             sitekey={TURNSTILE_SITE_KEY}
-            onVerify={(t) => setCaptchaToken(t)}
-            onExpire={() => setCaptchaToken(null)}
+            onVerify={(token) => {
+              console.log('Turnstile verified:', !!token);
+              setCaptchaToken(token);
+            }}
+            onExpire={() => {
+              console.log('Turnstile expired');
+              setCaptchaToken(null);
+            }}
+            onError={(error) => {
+              console.error('Turnstile error:', error);
+              setCaptchaToken(null);
+            }}
             theme="auto"
+            size="normal"
+            retry="auto"
           />
         ) : (
           <p className="text-xs text-muted-foreground">
