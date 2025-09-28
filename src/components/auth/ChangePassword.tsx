@@ -24,10 +24,10 @@ export function ChangePassword({ userEmail }: ChangePasswordProps) {
   const { toast } = useToast();
 
   const handlePasswordChange = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos",
+        description: "Por favor completa los campos de nueva contraseña",
         variant: "destructive",
       });
       return;
@@ -51,27 +51,38 @@ export function ChangePassword({ userEmail }: ChangePasswordProps) {
       return;
     }
 
-    if (currentPassword === newPassword) {
-      toast({
-        title: "Error",
-        description: "La nueva contraseña debe ser diferente a la actual",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setLoading(true);
 
-      // Usamos la sesión actual sin re-login para evitar problemas con Turnstile
-      // La verificación de contraseña actual se omite; Supabase exige sesión válida de todos modos.
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Tu sesión ha expirado. Por favor inicia sesión nuevamente.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Update password
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      // Use edge function to change password (bypasses Turnstile issues)
+      const response = await fetch('https://injvwmsqinrcthgdlvux.supabase.co/functions/v1/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          newPassword: newPassword,
+        }),
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al cambiar la contraseña');
+      }
 
       toast({
         title: "¡Éxito!",
@@ -121,33 +132,6 @@ export function ChangePassword({ userEmail }: ChangePasswordProps) {
           <DialogTitle>Cambiar Contraseña</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Contraseña Actual</Label>
-            <div className="relative">
-              <Input
-                id="currentPassword"
-                type={showCurrentPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Ingresa tu contraseña actual"
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-              >
-                {showCurrentPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="newPassword">Nueva Contraseña</Label>
             <div className="relative">
