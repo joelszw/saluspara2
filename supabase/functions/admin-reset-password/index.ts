@@ -104,30 +104,28 @@ serve(async (req) => {
       });
     }
 
-    // Send recovery email
-    const emailResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-recovery-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-      },
-      body: JSON.stringify({
+    // Send recovery email via edge function using Supabase client
+    console.log('Invoking send-recovery-email edge function...');
+    const { data: sendResult, error: sendError } = await supabaseAdmin.functions.invoke('send-recovery-email', {
+      body: {
         email: email,
         recoveryLink: data.properties?.action_link,
-      }),
+      },
     });
 
-    if (!emailResponse.ok) {
-      const emailError = await emailResponse.text();
-      console.error('Error sending recovery email:', emailError);
+    if (sendError) {
+      console.error('Error invoking send-recovery-email:', sendError.message);
       return new Response(JSON.stringify({ 
         error: 'Failed to send recovery email',
-        details: emailError 
+        details: sendError.message 
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log('Recovery email invoke result:', sendResult);
+
 
     return new Response(JSON.stringify({ 
       success: true, 
