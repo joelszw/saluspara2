@@ -17,6 +17,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('admin-reset-password called with method:', req.method);
+    
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,

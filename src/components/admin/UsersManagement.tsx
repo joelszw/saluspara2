@@ -242,6 +242,8 @@ export function UsersManagement() {
 
   const resetPassword = async (userId: string, email: string) => {
     try {
+      console.log('Attempting to reset password for:', email);
+      
       // Use admin edge function to generate recovery link and send email
       const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: {
@@ -249,11 +251,15 @@ export function UsersManagement() {
         },
       });
 
+      console.log('Function response:', { data, error });
+
       if (error) {
+        console.error('Supabase function error:', error);
         throw new Error(error.message || 'Failed to reset password');
       }
 
-      if (data.error) {
+      if (data?.error) {
+        console.error('Function returned error:', data.error);
         throw new Error(data.error || 'Failed to reset password');
       }
 
