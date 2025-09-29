@@ -242,40 +242,30 @@ export function UsersManagement() {
 
   const resetPassword = async (userId: string, email: string) => {
     try {
-      // Generate recovery link
-      const { data, error } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: email,
-      });
-
-      if (error) throw error;
-
-      // Send email using our edge function
-      const { error: emailError } = await supabase.functions.invoke('send-recovery-email', {
-        body: { 
+      // Use admin edge function to generate recovery link and send email
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
           email: email,
-          recoveryLink: data.properties?.action_link 
         },
       });
 
-      if (emailError) {
-        console.warn('Could not send email automatically:', emailError);
-        // Show manual recovery link
-        toast({
-          title: "Enlace Generado",
-          description: `Enlace de recuperación: ${data.properties?.action_link}`,
-        });
-      } else {
-        toast({
-          title: "Email Enviado",
-          description: "Se ha enviado un email de recuperación de contraseña",
-        });
+      if (error) {
+        throw new Error(error.message || 'Failed to reset password');
       }
+
+      if (data.error) {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+
+      toast({
+        title: "Correo Enviado",
+        description: `Se ha enviado un correo de recuperación a ${email}`,
+      });
     } catch (error: any) {
       console.error('Error resetting password:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo enviar el email de recuperación",
+        description: error.message || "No se pudo enviar el correo de recuperación",
         variant: "destructive",
       });
     }
