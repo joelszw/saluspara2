@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, Edit, RefreshCw, Plus, Users, UserPlus } from 'lucide-react';
+import { Trash2, Edit, RefreshCw, Plus, Users, UserPlus, Power, PowerOff } from 'lucide-react';
 
 interface UserData {
   id: string;
@@ -20,6 +20,7 @@ interface UserData {
   monthly_count: number;
   created_at: string;
   subscription_status: string;
+  enabled: boolean;
 }
 
 export function UsersManagement() {
@@ -280,6 +281,31 @@ export function UsersManagement() {
     }
   };
 
+  const toggleUserEnabled = async (userId: string, currentEnabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ enabled: !currentEnabled })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuario Actualizado",
+        description: `El usuario ha sido ${!currentEnabled ? 'habilitado' : 'deshabilitado'} exitosamente`,
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error toggling user status:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cambiar el estado del usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin': return 'destructive';
@@ -422,6 +448,7 @@ export function UsersManagement() {
             <TableRow>
               <TableHead>Email</TableHead>
               <TableHead>Rol</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Uso Diario</TableHead>
               <TableHead>Uso Mensual</TableHead>
               <TableHead>Fecha Registro</TableHead>
@@ -431,13 +458,13 @@ export function UsersManagement() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Cargando usuarios...
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
@@ -450,6 +477,11 @@ export function UsersManagement() {
                       {getRoleLabel(user.role)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant={user.enabled ? 'default' : 'destructive'}>
+                      {user.enabled ? 'Habilitado' : 'Deshabilitado'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{user.daily_count}</TableCell>
                   <TableCell>{user.monthly_count}</TableCell>
                   <TableCell>
@@ -457,6 +489,13 @@ export function UsersManagement() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        variant={user.enabled ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => toggleUserEnabled(user.id, user.enabled)}
+                      >
+                        {user.enabled ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                      </Button>
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm">

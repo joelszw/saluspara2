@@ -114,6 +114,7 @@ export type Database = {
           daily_count: number
           daily_uses: number
           email: string | null
+          enabled: boolean
           id: string
           monthly_count: number
           monthly_uses: number
@@ -126,6 +127,7 @@ export type Database = {
           daily_count?: number
           daily_uses?: number
           email?: string | null
+          enabled?: boolean
           id: string
           monthly_count?: number
           monthly_uses?: number
@@ -138,6 +140,7 @@ export type Database = {
           daily_count?: number
           daily_uses?: number
           email?: string | null
+          enabled?: boolean
           id?: string
           monthly_count?: number
           monthly_uses?: number
