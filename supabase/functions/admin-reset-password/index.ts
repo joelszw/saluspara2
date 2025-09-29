@@ -40,7 +40,10 @@ serve(async (req) => {
 
     // Get the requesting user's token to verify admin access
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.log('No authorization header found');
       return new Response(JSON.stringify({ error: 'Authorization header required' }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,16 +52,21 @@ serve(async (req) => {
 
     // Verify the user is authenticated and is an admin
     const token = authHeader.replace('Bearer ', '');
+    console.log('Attempting to get user with token...');
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
+      console.log('User authentication failed:', userError?.message);
       return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    console.log('User authenticated:', user.email);
+
     // Check if user is admin in our users table
+    console.log('Checking user role...');
     const { data: userData, error: roleError } = await supabaseAdmin
       .from('users')
       .select('role')
@@ -66,6 +74,7 @@ serve(async (req) => {
       .single();
 
     if (roleError || userData?.role !== 'admin') {
+      console.log('Admin check failed:', roleError?.message, 'Role:', userData?.role);
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
