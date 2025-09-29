@@ -292,9 +292,9 @@ export function UsersManagement() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin': return 'Administrador';
-      case 'premium': return 'Premium';
-      case 'test': return 'Test';
-      default: return 'Gratuito';
+      case 'premium': return 'Premium (100/día, 1000/mes)';
+      case 'test': return 'Test (50/día, 500/mes)';
+      default: return 'Gratuito (3/día, 50/mes)';
     }
   };
 
@@ -394,10 +394,10 @@ export function UsersManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Gratuito</SelectItem>
-                      <SelectItem value="test">Test</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="free">Gratuito (3/día, 50/mes)</SelectItem>
+                      <SelectItem value="test">Test (50/día, 500/mes)</SelectItem>
+                      <SelectItem value="premium">Premium (100/día, 1000/mes)</SelectItem>
+                      <SelectItem value="admin">Administrador (ilimitado)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -482,10 +482,10 @@ export function UsersManagement() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="free">Gratuito</SelectItem>
-                                  <SelectItem value="test">Test</SelectItem>
-                                  <SelectItem value="premium">Premium</SelectItem>
-                                  <SelectItem value="admin">Administrador</SelectItem>
+                                  <SelectItem value="free">Gratuito (3/día, 50/mes)</SelectItem>
+                                  <SelectItem value="test">Test (50/día, 500/mes)</SelectItem>
+                                  <SelectItem value="premium">Premium (100/día, 1000/mes)</SelectItem>
+                                  <SelectItem value="admin">Administrador (ilimitado)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
