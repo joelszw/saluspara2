@@ -90,48 +90,29 @@ serve(async (req) => {
       });
     }
 
-    // Generate recovery link using admin client
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'recovery',
-      email: email,
+    // Send recovery email using Supabase Auth (native email system)
+    console.log('Sending recovery email via resetPasswordForEmail...');
+    const { data, error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+      redirectTo: `https://salustia.joelszw.com/`
     });
 
     if (error) {
-      console.error('Error generating recovery link:', error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Send recovery email using Supabase Auth (native email system)
-    console.log('Sending recovery email via Supabase Auth...');
-    const { data: emailData, error: emailError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'recovery',
-      email: email,
-      options: {
-        redirectTo: `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?type=recovery`
-      }
-    });
-
-    if (emailError) {
-      console.error('Error sending recovery email via Supabase:', emailError.message);
+      console.error('Error sending recovery email via Supabase:', error.message);
       return new Response(JSON.stringify({ 
         error: 'Failed to send recovery email',
-        details: emailError.message 
+        details: error.message 
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log('Recovery email sent successfully via Supabase Auth');
+    console.log('Recovery email sent successfully via resetPasswordForEmail');
 
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Recovery email sent successfully',
-      action_link: data.properties?.action_link 
+      message: 'Recovery email sent successfully'
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
