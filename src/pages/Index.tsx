@@ -33,6 +33,7 @@ const Index = () => {
   const [counts, setCounts] = useState<{ daily: number; monthly: number }>({ daily: 0, monthly: 0 });
   const [guestCaptchaToken, setGuestCaptchaToken] = useState<string | null>(null);
   const [guestUsed, setGuestUsed] = useState(() => Number(localStorage.getItem("guest_query_count") || "0"));
+  const [userRole, setUserRole] = useState<'free' | 'premium' | 'test' | 'admin'>('free');
 
   // Auth state
   useEffect(() => {
@@ -52,6 +53,7 @@ const Index = () => {
     if (!userId) {
       setHistory([]);
       setCounts({ daily: 0, monthly: 0 });
+      setUserRole('free');
       return;
     }
     const load = async () => {
@@ -62,6 +64,14 @@ const Index = () => {
         .order("timestamp", { ascending: false })
         .limit(30);
       if (!error && data) setHistory(data as QueryItem[]);
+
+      // Get user role
+      const { data: userData } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      if (userData) setUserRole(userData.role);
 
       const todayStart = new Date(); todayStart.setHours(0,0,0,0);
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -223,7 +233,11 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between mt-3 gap-3">
               <div className="text-xs text-muted-foreground">
                 {userId ? (
-                  <span>Hoy: {counts.daily}/3 • Mes: {counts.monthly}/20 (Plan gratuito)</span>
+                  <span>
+                    Hoy: {counts.daily}/{userRole === 'admin' ? '∞' : userRole === 'premium' ? '100' : userRole === 'test' ? '50' : '3'} • 
+                    Mes: {counts.monthly}/{userRole === 'admin' ? '∞' : userRole === 'premium' ? '1000' : userRole === 'test' ? '500' : '50'} 
+                    ({userRole === 'admin' ? 'Admin' : userRole === 'premium' ? 'Premium' : userRole === 'test' ? 'Test' : 'Gratuito'})
+                  </span>
                 ) : (
                   <span>Consultas restantes como invitado: {guestRemaining} / 3</span>
                 )}
