@@ -48,6 +48,23 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [turnstileWidget, setTurnstileWidget] = useState<any>(null)
   const [guestUsed, setGuestUsed] = useState(() => Number(localStorage.getItem("guest_query_count") || "0"))
+  const [userRole, setUserRole] = useState<'free' | 'premium' | 'test' | 'admin'>('free')
+  
+  useEffect(() => {
+    if (!userId) {
+      setUserRole('free')
+      return
+    }
+    const loadRole = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", userId)
+        .single()
+      if (data?.role) setUserRole(data.role as any)
+    }
+    loadRole()
+  }, [userId])
   
   const guestRemaining = useMemo(() => {
     return Math.max(0, 3 - guestUsed)
@@ -555,7 +572,11 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {userId ? (
-                <span>{t('hero.daily_monthly', { daily: counts.daily, monthly: counts.monthly })}</span>
+                <span>
+                  Hoy: {counts.daily}/{userRole === 'admin' ? '∞' : userRole === 'premium' ? '100' : userRole === 'test' ? '50' : '3'} • 
+                  Mes: {counts.monthly}/{userRole === 'admin' ? '∞' : userRole === 'premium' ? '1000' : userRole === 'test' ? '500' : '50'} 
+                  ({userRole === 'admin' ? 'Admin' : userRole === 'premium' ? 'Premium' : userRole === 'test' ? 'Test' : 'Gratuito'})
+                </span>
               ) : (
                 <span>{t('hero.guest_remaining', { count: guestRemaining })}</span>
               )}
