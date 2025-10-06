@@ -110,87 +110,110 @@ function getAdvancedMedicalKeywords(text: string): string[] {
   
   // Comprehensive medical terminology dictionary
   const medicalTerms = {
+    // Anatomical regions (VERY SPECIFIC - highest priority)
+    anatomy: ['ankle', 'tobillo', 'knee', 'rodilla', 'hip', 'cadera', 'shoulder', 'hombro', 'elbow', 'codo', 
+              'wrist', 'muñeca', 'spine', 'columna', 'foot', 'pie', 'hand', 'mano', 'femur', 'tibia', 'fibula'],
     // Orthopedic specific terms
     orthopedic: ['hallux', 'valgus', 'abductus', 'bunion', 'metatarsal', 'phalanx', 'osteotomy', 'arthrodesis', 'arthroplasty'],
     // Surgical approaches
     surgical: ['mis', 'minimally invasive', 'percutaneous', 'open', 'arthroscopic', 'endoscopic', 'laparoscopic'],
     // General medical terms
-    anatomy: ['bone', 'joint', 'ligament', 'tendon', 'cartilage', 'muscle', 'nerve', 'artery', 'vein'],
-    pathology: ['fracture', 'rupture', 'tear', 'sprain', 'strain', 'inflammation', 'infection', 'deformity'],
-    treatment: ['surgery', 'rehabilitation', 'therapy', 'treatment', 'management', 'protocol', 'technique']
+    generalAnatomy: ['bone', 'joint', 'ligament', 'tendon', 'cartilage', 'muscle', 'nerve', 'artery', 'vein'],
+    pathology: ['fracture', 'fractura', 'rupture', 'tear', 'sprain', 'strain', 'inflammation', 'infection', 'deformity'],
+    treatment: ['surgery', 'cirugía', 'rehabilitation', 'rehabilitación', 'therapy', 'terapia', 'treatment', 'tratamiento', 'management', 'protocol', 'technique'],
+    // Common non-medical words to EXCLUDE
+    stopWords: ['could', 'would', 'should', 'tell', 'me', 'the', 'you', 'please', 'what', 'how', 'when', 'where', 
+                'podrías', 'indicarme', 'más', 'sobre', 'en', 'de', 'la', 'el', 'los', 'las', 'un', 'una', 'articles', 'artículos', 'latest', 'recientes']
   };
   
   const extractedKeywords = new Set<string>();
   
-  // Extract medical terms from all categories
-  Object.values(medicalTerms).flat().forEach(term => {
-    if (lowerText.includes(term.toLowerCase())) {
-      extractedKeywords.add(term);
-    }
+  // First, extract multi-word anatomical phrases (e.g., "ankle fracture")
+  const anatomyWithPathology: string[] = [];
+  medicalTerms.anatomy.forEach(anat => {
+    medicalTerms.pathology.forEach(path => {
+      const phrase = `${anat} ${path}`;
+      if (lowerText.includes(phrase.toLowerCase())) {
+        anatomyWithPathology.push(phrase);
+        console.log(`FOUND MULTI-WORD: "${phrase}"`);
+      }
+    });
   });
   
-  // Extract capitalized medical terms (likely proper nouns or technical terms)
-  const capitalizedTerms = originalText.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
-  capitalizedTerms.forEach(term => {
-    if (term.length > 3 && term.length < 20) {
-      extractedKeywords.add(term);
-    }
-  });
+  // Add multi-word phrases as high priority
+  anatomyWithPathology.forEach(phrase => extractedKeywords.add(phrase));
   
-  // Extract terms with specific patterns (medical abbreviations)
-  const abbreviations = originalText.match(/\b[A-Z]{2,5}\b/g) || [];
-  abbreviations.forEach(abbr => {
-    if (abbr.length >= 2 && abbr.length <= 5) {
-      extractedKeywords.add(abbr);
-    }
-  });
-  
-  // Extract Latin/medical terms (words ending in common medical suffixes) - PRESERVE ACCENTS
-  const latinSuffixes = ['itis', 'osis', 'ósis', 'oma', 'ia', 'us', 'um', 'al', 'ic'];
-  const words = originalText.split(/\s+/);
-  words.forEach(word => {
-    // FIXED: Use regex that preserves accented characters
-    const cleanWord = word.replace(/[^\w\u00C0-\u017F]/g, ''); // Keep accented characters
-    console.log(`EXTRACTION DEBUG: "${word}" -> cleaned: "${cleanWord}"`);
+  // Extract medical terms from all categories (EXCEPT stopWords)
+  Object.entries(medicalTerms).forEach(([category, terms]) => {
+    if (category === 'stopWords') return; // Skip stop words
     
-    if (cleanWord.length > 4) {
-      latinSuffixes.forEach(suffix => {
-        // Check both original and normalized versions for suffix matching
-        const normalizedWord = cleanWord.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const normalizedSuffix = suffix.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        
-        if (cleanWord.toLowerCase().endsWith(suffix) || normalizedWord.endsWith(normalizedSuffix)) {
-          console.log(`SUFFIX MATCH: "${cleanWord}" matches suffix "${suffix}"`);
-          extractedKeywords.add(cleanWord); // Add original word with accents
-        }
-      });
-    }
+    terms.forEach(term => {
+      if (lowerText.includes(term.toLowerCase())) {
+        extractedKeywords.add(term);
+      }
+    });
   });
   
-  // Convert to array and prioritize
-  const keywordArray = Array.from(extractedKeywords);
+  // Filter out stop words from extracted keywords
+  const filteredKeywords = Array.from(extractedKeywords).filter(keyword => {
+    const lowerKw = keyword.toLowerCase();
+    return !medicalTerms.stopWords.some(stopWord => lowerKw === stopWord);
+  });
+  
+  // Prioritize specific anatomy + pathology combinations
+  const combinedTerms = filteredKeywords.filter(kw => kw.includes(' '));
+  
+  // Prioritize specific anatomical regions
+  const anatomicalTerms = filteredKeywords.filter(kw => 
+    medicalTerms.anatomy.some(term => kw.toLowerCase() === term.toLowerCase())
+  );
   
   // Prioritize orthopedic terms if found
-  const orthopedicTerms = keywordArray.filter(kw => 
+  const orthopedicTerms = filteredKeywords.filter(kw => 
     medicalTerms.orthopedic.some(term => kw.toLowerCase().includes(term.toLowerCase()))
   );
   
   // Prioritize surgical terms
-  const surgicalTerms = keywordArray.filter(kw => 
+  const surgicalTerms = filteredKeywords.filter(kw => 
     medicalTerms.surgical.some(term => kw.toLowerCase().includes(term.toLowerCase()))
   );
   
-  // Build final keyword list with prioritization
+  // Get treatment terms
+  const treatmentTerms = filteredKeywords.filter(kw => 
+    medicalTerms.treatment.some(term => kw.toLowerCase() === term.toLowerCase())
+  );
+  
+  // Get pathology terms
+  const pathologyTerms = filteredKeywords.filter(kw => 
+    medicalTerms.pathology.some(term => kw.toLowerCase() === term.toLowerCase())
+  );
+  
+  // Build final keyword list with NEW prioritization: anatomy + pathology combos > anatomy > pathology > treatment
   const finalKeywords = [
-    ...orthopedicTerms,
-    ...surgicalTerms,
-    ...keywordArray.filter(kw => !orthopedicTerms.includes(kw) && !surgicalTerms.includes(kw))
-  ].slice(0, 5);
+    ...combinedTerms,                    // 1. Combined terms like "ankle fracture" (HIGHEST)
+    ...anatomicalTerms,                  // 2. Specific anatomy like "ankle" (VERY HIGH)
+    ...orthopedicTerms,                  // 3. Orthopedic terms
+    ...surgicalTerms,                    // 4. Surgical terms
+    ...pathologyTerms,                   // 5. Pathology (lower than anatomy now)
+    ...treatmentTerms,                   // 6. Treatment (lowest)
+    ...filteredKeywords.filter(kw => 
+      !combinedTerms.includes(kw) && 
+      !anatomicalTerms.includes(kw) && 
+      !orthopedicTerms.includes(kw) && 
+      !surgicalTerms.includes(kw) &&
+      !pathologyTerms.includes(kw) &&
+      !treatmentTerms.includes(kw)
+    )
+  ].slice(0, 5); // Limit to 5 keywords
   
   console.log('Advanced extraction results:', {
-    foundTerms: keywordArray,
+    foundTerms: filteredKeywords,
+    combinedTerms,
+    anatomicalTerms,
     orthopedicTerms,
     surgicalTerms,
+    pathologyTerms,
+    treatmentTerms,
     finalKeywords
   });
   
@@ -225,21 +248,40 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     let score = 0;
     const lowerKeyword = keyword.toLowerCase();
     
+    // BONUS for multi-word combinations (e.g., "ankle fracture")
+    if (keyword.includes(' ')) {
+      score += 25; // HIGHEST priority for combined terms
+      console.log(`DEBUG: "${keyword}" is MULTI-WORD COMBINATION (+25 points)`);
+    }
+    
     // ENHANCED pathology detection with proper Spanish-English normalization
     let normalizedKeyword = lowerKeyword
       .normalize('NFD') // Decompose accents
       .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
-      .replace(/[^a-z]/g, ''); // Keep only letters
+      .replace(/[^a-z ]/g, ''); // Keep only letters and spaces
     
     // Special mapping for Spanish medical terms to correct English equivalents
     const spanishToEnglishMap: { [key: string]: string } = {
       'exostosis': 'exostosis',
       'exostósis': 'exostosis', 
-      'exóstosis': 'exostosis'
+      'exóstosis': 'exostosis',
+      'tobillo': 'ankle',
+      'rodilla': 'knee',
+      'cadera': 'hip',
+      'hombro': 'shoulder',
+      'codo': 'elbow',
+      'muñeca': 'wrist',
+      'columna': 'spine',
+      'pie': 'foot',
+      'mano': 'hand',
+      'fractura': 'fracture',
+      'rehabilitación': 'rehabilitation',
+      'cirugía': 'surgery',
+      'tratamiento': 'treatment'
     };
     
     // Apply mapping if the original keyword matches
-    const originalNormalized = keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+    const originalNormalized = keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, '');
     if (spanishToEnglishMap[originalNormalized]) {
       normalizedKeyword = spanishToEnglishMap[originalNormalized];
       console.log(`DEBUG: Mapped "${keyword}" -> "${normalizedKeyword}" (Spanish to English)`);
@@ -247,74 +289,97 @@ function selectMostSpecificKeyword(keywords: string[]): string {
     
     console.log(`DEBUG: Analyzing keyword "${keyword}" -> normalized: "${normalizedKeyword}"`);
     
-    // BILINGUAL pathologies list - Spanish and English variations (FIXED: removed incorrect "exstosis")
+    // Specific anatomical regions (NEW - VERY HIGH PRIORITY)
+    const specificAnatomy = ['ankle', 'tobillo', 'knee', 'rodilla', 'hip', 'cadera', 'shoulder', 'hombro', 
+                             'elbow', 'codo', 'wrist', 'muñeca', 'spine', 'columna', 'foot', 'pie', 'hand', 'mano'];
+    const isSpecificAnatomy = specificAnatomy.some(anat => {
+      const normalizedAnat = anat.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const match = normalizedKeyword.includes(normalizedAnat) || lowerKeyword.includes(anat);
+      if (match) {
+        console.log(`DEBUG: Found specific anatomy match: "${keyword}" contains "${anat}"`);
+      }
+      return match;
+    });
+    
+    if (isSpecificAnatomy) {
+      score += 20; // VERY HIGH PRIORITY for specific anatomy
+      console.log(`DEBUG: "${keyword}" identified as SPECIFIC ANATOMY (+20 points)`);
+    }
+    
+    // BILINGUAL pathologies list - Spanish and English variations
     const pathologies = [
-      // Exostosis variations (Spanish + English) - CORRECTED
       'exostosis', 'exostósis', 'exóstosis', 'exostoses',
-      // Common foot pathologies (both languages)
       'neuroma', 'bursitis', 'hallux', 'metatarsalgia', 'fasciitis',
       'morton', 'capsulitis', 'tendinitis', 'tendinosis', 'tendinopatía',
       'bunion', 'juanete', 'hammertoe', 'clawtoe', 'mallettoe',
       'plantar', 'fascitis', 'neuromatosis', 'sesamoiditis',
       'osteomielitis', 'osteomyelitis', 'artritis', 'arthritis',
       'sinovitis', 'synovitis', 'condromalacia', 'chondromalacia',
-      // Additional pathology terms
       'tumor', 'quiste', 'cyst', 'lesion', 'lesión', 'fractura', 'fracture',
       'deformidad', 'deformity', 'espolón', 'spur', 'calcáneo', 'calcaneal'
     ];
     
     const isPathology = pathologies.some(path => {
       const normalizedPath = path.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
-      const match = normalizedKeyword.includes(normalizedPath) || lowerKeyword.includes(path);
+      const match = normalizedKeyword.replace(/[^a-z]/g, '').includes(normalizedPath) || lowerKeyword.includes(path);
       if (match) {
         console.log(`DEBUG: Found pathology match: "${keyword}" contains "${path}"`);
       }
       return match;
     });
     
-    if (isPathology) {
-      score += 15; // HIGHEST PRIORITY for pathologies
-      console.log(`DEBUG: "${keyword}" identified as PATHOLOGY (+15 points)`);
+    if (isPathology && !isSpecificAnatomy) { // Only add if not already specific anatomy
+      score += 12; // REDUCED from 15 (anatomy now has priority)
+      console.log(`DEBUG: "${keyword}" identified as PATHOLOGY (+12 points)`);
     }
     
-    // Specific anatomy (reduced priority)
-    const anatomy = ['interdigital', 'plantar', 'dorsal', 'medial', 'lateral', 'proximal', 'distal'];
-    const isAnatomy = anatomy.some(anat => lowerKeyword.includes(anat));
-    if (isAnatomy) {
-      score += 6; // Reduced from 8 to 6
-      console.log(`DEBUG: "${keyword}" identified as ANATOMY (+6 points)`);
+    // General anatomy (lower priority than specific)
+    const generalAnatomy = ['interdigital', 'plantar', 'dorsal', 'medial', 'lateral', 'proximal', 'distal', 'bone', 'joint'];
+    const isGeneralAnatomy = generalAnatomy.some(anat => lowerKeyword.includes(anat));
+    if (isGeneralAnatomy && !isSpecificAnatomy) {
+      score += 8;
+      console.log(`DEBUG: "${keyword}" identified as GENERAL ANATOMY (+8 points)`);
     }
     
     // Specific procedures
-    const procedures = ['osteotomy', 'arthrodesis', 'arthroplasty', 'resection', 'excision'];
+    const procedures = ['osteotomy', 'arthrodesis', 'arthroplasty', 'resection', 'excision', 'reconstruction'];
     const isProcedure = procedures.some(proc => lowerKeyword.includes(proc));
     if (isProcedure) {
-      score += 8; // Slightly increased
-      console.log(`DEBUG: "${keyword}" identified as PROCEDURE (+8 points)`);
+      score += 10;
+      console.log(`DEBUG: "${keyword}" identified as PROCEDURE (+10 points)`);
+    }
+    
+    // Treatment terms (specific ones)
+    const treatments = ['rehabilitation', 'rehabilitación', 'therapy', 'terapia'];
+    const isTreatment = treatments.some(treat => lowerKeyword.includes(treat));
+    if (isTreatment && !keyword.includes(' ')) { // Don't double count if in multi-word
+      score += 7;
+      console.log(`DEBUG: "${keyword}" identified as TREATMENT (+7 points)`);
     }
     
     // Technical terms
     const technical = ['minimally', 'invasive', 'percutaneous', 'arthroscopic', 'endoscopic'];
     if (technical.some(tech => lowerKeyword.includes(tech))) {
-      score += 4;
+      score += 6;
     }
     
-    // Penalize generic terms
-    const generic = ['tratamiento', 'treatment', 'cirugía', 'surgery', 'terapia', 'therapy', 'manejo', 'management'];
-    if (generic.some(gen => lowerKeyword.includes(gen))) {
-      score -= 5;
+    // PENALIZE very generic terms
+    const veryGeneric = ['tratamiento', 'treatment', 'cirugía', 'surgery', 'manejo', 'management'];
+    if (veryGeneric.some(gen => lowerKeyword === gen)) {
+      score -= 8; // More penalty
+      console.log(`DEBUG: "${keyword}" is VERY GENERIC (-8 points)`);
     }
     
     // Bonus for longer, more specific terms
-    if (keyword.length > 8) {
-      score += 3; // Increased bonus for longer terms
-    } else if (keyword.length > 6) {
+    if (keyword.length > 12) {
+      score += 4;
+    } else if (keyword.length > 8) {
       score += 2;
     }
     
-    // Enhanced bonus for Latin/medical endings with special emphasis on '-osis'
+    // Enhanced bonus for Latin/medical endings
     if (lowerKeyword.endsWith('osis') || lowerKeyword.endsWith('ósis')) {
-      score += 5; // Special bonus for '-osis' endings (exóstosis benefit)
+      score += 5;
     } else {
       const medicalEndings = ['itis', 'oma', 'ia', 'us', 'um'];
       if (medicalEndings.some(ending => lowerKeyword.endsWith(ending))) {
@@ -322,7 +387,7 @@ function selectMostSpecificKeyword(keywords: string[]): string {
       }
     }
     
-    console.log(`FINAL SCORE: "${keyword}" = ${score} points (pathology: ${isPathology}, anatomy: ${isAnatomy}, procedure: ${isProcedure})`);
+    console.log(`FINAL SCORE: "${keyword}" = ${score} points (anatomy: ${isSpecificAnatomy}, pathology: ${isPathology}, procedure: ${isProcedure}, treatment: ${isTreatment})`);
     return { keyword, score };
   });
   
