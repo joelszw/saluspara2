@@ -82,6 +82,27 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
     }
   }
 
+  const handleGoogleAuth = async () => {
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        }
+      })
+      if (error) throw error
+    } catch (e: any) {
+      console.error('Google OAuth error:', e)
+      toast({ 
+        title: "Error", 
+        description: e.message || "No se pudo iniciar sesión con Google",
+        variant: "destructive"
+      })
+      setLoading(false)
+    }
+  }
+
   const handleReset = async () => {
     try {
       const redirectUrl = `${window.location.origin}/`
@@ -164,16 +185,13 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
           {t(mode === "login" ? 'auth.login.button' : 'auth.signup.button')}
         </Button>
         
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" disabled>
-              {t('auth.google')}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {t('freemium.coming_soon')}
-          </TooltipContent>
-        </Tooltip>
+        <Button 
+          variant="outline" 
+          onClick={handleGoogleAuth}
+          disabled={loading}
+        >
+          {t('auth.google')}
+        </Button>
       </div>
       
       {mode === "login" && (
