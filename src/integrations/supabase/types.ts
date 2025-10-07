@@ -151,7 +151,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_with_masked_emails: {
+        Row: {
+          auth_method: string | null
+          created_at: string | null
+          daily_count: number | null
+          daily_uses: number | null
+          email: string | null
+          enabled: boolean | null
+          id: string | null
+          monthly_count: number | null
+          monthly_uses: number | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          subscription_status: string | null
+        }
+        Insert: {
+          auth_method?: string | null
+          created_at?: string | null
+          daily_count?: number | null
+          daily_uses?: number | null
+          email?: never
+          enabled?: boolean | null
+          id?: string | null
+          monthly_count?: number | null
+          monthly_uses?: number | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          subscription_status?: string | null
+        }
+        Update: {
+          auth_method?: string | null
+          created_at?: string | null
+          daily_count?: number | null
+          daily_uses?: number | null
+          email?: never
+          enabled?: boolean | null
+          id?: string | null
+          monthly_count?: number | null
+          monthly_uses?: number | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          subscription_status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_usage_limits: {
@@ -161,6 +202,10 @@ export type Database = {
       check_usage_limits_secure: {
         Args: { client_ip?: string; user_id: string }
         Returns: Json
+      }
+      get_user_email_safe: {
+        Args: { user_id: string }
+        Returns: string
       }
       get_user_role: {
         Args: { user_id: string }
