@@ -26,6 +26,8 @@ const resources = {
       "chat.welcome_title": "¡Hola! Soy tu asistente médico IA",
       "chat.welcome_subtitle": "Pregúntame sobre síntomas, medicamentos, procedimientos y más.",
       "chat.clear_history": "Limpiar historial",
+      "chat.patient_warning.title": "⚕️ Esta plataforma es solo para personal sanitario.",
+      "chat.patient_warning.message": "Si eres paciente, por favor consulta a tu médico para cualquier duda médica. No utilices esta información para autodiagnóstico o tratamiento.",
       
       // Features Section
       "features.title": "¿Por qué elegir Salustia?",
@@ -103,6 +105,8 @@ const resources = {
       "chat.welcome_title": "Hello! I'm your medical AI assistant",
       "chat.welcome_subtitle": "Ask me about symptoms, medications, procedures and more.",
       "chat.clear_history": "Clear history",
+      "chat.patient_warning.title": "⚕️ This platform is for healthcare professionals only.",
+      "chat.patient_warning.message": "If you are a patient, please consult your doctor for any medical questions. Do not use this information for self-diagnosis or treatment.",
       
       // Features Section
       "features.title": "Why choose Salustia?",

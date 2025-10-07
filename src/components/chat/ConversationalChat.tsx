@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +11,8 @@ import { ChatBubbleAI } from "./ChatBubbleAI"
 import { FollowUpSuggestions } from "./FollowUpSuggestions"
 import { ClearHistoryButton } from "./ClearHistoryButton"
 import { PubMedReferencesSection } from "@/components/references/PubMedReferencesSection"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? ""
 
@@ -35,6 +37,31 @@ interface ConversationalChatProps {
   onUsageUpdate: () => void
 }
 
+const detectPatientQuery = (text: string): boolean => {
+  const lowerText = text.toLowerCase()
+  
+  // Patient indicators in Spanish
+  const spanishIndicators = [
+    'tengo', 'me duele', 'siento', 'mi hijo', 'mi hija', 'mi esposo', 'mi esposa',
+    'mi madre', 'mi padre', 'mi hermano', 'mi hermana', 'mi familia', 'me pasa',
+    'me ocurre', 'necesito ayuda', 'qué hago', 'es normal que', 'debo preocuparme',
+    'mi bebé', 'mis síntomas', 'sufro de', 'padezco', 'me diagnosticaron',
+    'estoy embarazada', 'mi pareja', 'me recetaron', 'puedo tomar', 'debo tomar'
+  ]
+  
+  // Patient indicators in English
+  const englishIndicators = [
+    'i have', 'i feel', 'my son', 'my daughter', 'my husband', 'my wife',
+    'my mother', 'my father', 'my brother', 'my sister', 'my family', 'it hurts',
+    'should i worry', 'is it normal', 'my baby', 'my symptoms', 'i suffer',
+    'i was diagnosed', 'i am pregnant', 'my partner', 'can i take', 'should i take'
+  ]
+  
+  const allIndicators = [...spanishIndicators, ...englishIndicators]
+  
+  return allIndicators.some(indicator => lowerText.includes(indicator))
+}
+
 export function ConversationalChat({ userId, counts, onUsageUpdate }: ConversationalChatProps) {
   const { t } = useTranslation()
   const [prompt, setPrompt] = useState("")
@@ -49,6 +76,7 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const [turnstileWidget, setTurnstileWidget] = useState<any>(null)
   const [guestUsed, setGuestUsed] = useState(() => Number(localStorage.getItem("guest_query_count") || "0"))
   const [userRole, setUserRole] = useState<'free' | 'premium' | 'test' | 'admin'>('free')
+  const [showPatientWarning, setShowPatientWarning] = useState(false)
   
   useEffect(() => {
     if (!userId) {
@@ -164,6 +192,12 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
   const handleAsk = async (inputPrompt?: string, isContinuation = false, previousMessageIndex?: number, previousResponseText?: string) => {
     const currentPrompt = inputPrompt || prompt.trim()
     if (!currentPrompt && !isContinuation) return
+
+    // Detect if this is a patient query (only for new queries, not continuations)
+    if (!isContinuation && detectPatientQuery(currentPrompt)) {
+      setShowPatientWarning(true)
+      setTimeout(() => setShowPatientWarning(false), 10000) // Hide after 10 seconds
+    }
 
     // Get the previous response if this is a continuation
     const previousResponse = previousResponseText || (isContinuation && previousMessageIndex !== undefined 
@@ -432,6 +466,25 @@ export function ConversationalChat({ userId, counts, onUsageUpdate }: Conversati
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
+      {/* Patient Warning */}
+      <AnimatePresence>
+        {showPatientWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="px-4 pt-4"
+          >
+            <Alert variant="destructive" className="border-warning bg-warning/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <strong>{t('chat.patient_warning.title')}</strong> {t('chat.patient_warning.message')}
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Chat Messages */}
       <div 
         ref={chatContainerRef}
