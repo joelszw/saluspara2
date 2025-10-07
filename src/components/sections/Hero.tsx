@@ -13,29 +13,27 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
   const { t } = useTranslation()
 
   return (
-    <section className="relative py-12 overflow-hidden min-h-screen">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
+    <section className="relative py-16 overflow-hidden min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       
       <div className="container mx-auto px-4 relative h-full">
         <motion.div 
-          className="text-center mb-8"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           {/* Medical illustration */}
           <motion.div 
-            className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center"
+            className="w-16 h-16 mx-auto mb-6 bg-primary rounded-2xl flex items-center justify-center shadow-lg"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <svg 
-              width="40" 
-              height="40" 
+              width="32" 
+              height="32" 
               viewBox="0 0 100 100" 
-              className="text-white"
+              className="text-primary-foreground"
               fill="currentColor"
             >
               <path d="M40 10 h20 v30 h30 v20 h-30 v30 h-20 v-30 h-30 v-20 h30 z" />
@@ -43,7 +41,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
           </motion.div>
           
           <motion.h1 
-            className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-success bg-clip-text text-transparent"
+            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
@@ -52,7 +50,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
           </motion.h1>
           
           <motion.p 
-            className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}

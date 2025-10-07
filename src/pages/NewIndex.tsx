@@ -94,7 +94,7 @@ const NewIndex = () => {
     <div className="min-h-screen bg-background">
       <Header userEmail={userEmail} history={history} />
       
-      <main>
+      <main className="pt-16">
         <Hero 
           userId={userId} 
           counts={counts} 
