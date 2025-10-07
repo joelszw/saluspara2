@@ -7,25 +7,27 @@ export function Community() {
   const { t } = useTranslation()
 
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden bg-muted/20">
+    <section className="py-24 relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5" />
       
       <div className="container mx-auto px-4 relative">
         <motion.div
-          className="max-w-5xl mx-auto text-center"
+          className="max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl md:text-5xl font-bold mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
             {t('community.title')}
           </h2>
           
-          <p className="text-lg md:text-xl text-muted-foreground mb-16 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8">
             {t('community.subtitle')}
           </p>
           
-          <div className="grid md:grid-cols-3 gap-12 mb-16">
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
             {[
               { icon: Users, value: "1,000+", label: "Profesionales" },
               { icon: Shield, value: "99.9%", label: "Confiabilidad" },
@@ -35,24 +37,23 @@ export function Community() {
               return (
                 <motion.div
                   key={index}
-                  className="flex flex-col items-center"
+                  className="p-6"
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Icon className="w-10 h-10 mb-4 text-primary" />
-                  <div className="text-5xl md:text-6xl font-bold mb-3">{stat.value}</div>
-                  <div className="text-base text-muted-foreground font-medium">{stat.label}</div>
+                  <Icon className="w-8 h-8 mx-auto mb-4 text-primary" />
+                  <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </motion.div>
               )
             })}
           </div>
           
           <Button 
-            variant="hero"
             size="lg"
-            className="mb-12 px-8 text-base"
+            className="bg-gradient-to-r from-primary to-success hover:from-primary/90 hover:to-success/90 text-white border-0 mb-8"
           >
             {t('community.cta')}
           </Button>

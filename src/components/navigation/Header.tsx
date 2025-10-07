@@ -27,9 +27,9 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
   const [openSignup, setOpenSignup] = useState(false)
 
   return (
-    <header className="fixed top-0 left-0 right-0 border-b bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 z-50 shadow-sm">
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4">
-        <a href="/" className="font-bold text-xl tracking-tight">
+    <header className="fixed top-0 left-0 right-0 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+        <a href="/" className="font-semibold text-lg text-primary">
           Salustia
         </a>
         

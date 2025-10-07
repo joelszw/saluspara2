@@ -8,111 +8,108 @@ All colors MUST be HSL.
 
 @layer base {
 :root {
-    /* Light theme - Qure.ai inspired professional palette */
-    --background: 0 0% 98%;
-    --foreground: 210 40% 15%; /* Dark blue-gray */
+    /* Light theme - Medical palette */
+    --background: 0 0% 100%;
+    --foreground: 205 88% 19%; /* #08375F dark blue */
 
     --card: 0 0% 100%;
-    --card-foreground: 210 40% 15%;
+    --card-foreground: 205 88% 19%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 15%;
+    --popover-foreground: 205 88% 19%;
 
-    --primary: 8 82% 66%; /* Coral/salmon accent */
+    --primary: 129 100% 67%; /* #55FF61 bright green */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 180 95% 38%; /* Teal accent */
+    --secondary: 195 100% 53%; /* #0BF4FF cyan */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 195 82% 48%; /* Bright blue */
+    --accent: 204 72% 56%; /* #3E9DE1 light blue */
     --accent-foreground: 0 0% 100%;
 
-    --success: 155 85% 44%; /* Professional green */
+    --success: 124 90% 27%; /* #129524 dark green */
     --success-foreground: 0 0% 100%;
 
-    --info: 210 100% 48%; /* Info blue */
+    --info: 206 100% 36%; /* #006FB9 blue */
     --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 8 82% 66%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 129 100% 67%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 210 40% 15%;
-    --sidebar-primary: 8 82% 66%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 205 88% 19%;
+    --sidebar-primary: 129 100% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 210 40% 15%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 8 82% 66%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 205 88% 19%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 129 100% 67%;
 
     /* Shadows and effects */
-    --shadow-elevated: 0 10px 40px -12px hsl(210 40% 15% / 0.15);
-    --shadow-soft: 0 4px 20px -8px hsl(210 40% 15% / 0.08);
-    --shadow-card: 0 2px 12px -4px hsl(210 40% 15% / 0.1);
-    --gradient-primary: linear-gradient(135deg, hsl(8 82% 66%), hsl(8 82% 56%));
-    --gradient-secondary: linear-gradient(135deg, hsl(180 95% 38%), hsl(195 82% 48%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 45% 12%), hsl(210 50% 20%));
+    --shadow-elevated: 0 10px 30px -10px hsl(var(--primary) / 0.35);
+    --shadow-soft: 0 6px 18px -8px hsl(var(--secondary) / 0.25);
+    --gradient-primary: linear-gradient(135deg, hsl(129 100% 67%), hsl(124 90% 27%));
+    --gradient-secondary: linear-gradient(135deg, hsl(195 100% 53%), hsl(204 72% 56%));
   }
 
   .dark {
-    /* Dark theme - Qure.ai inspired deep navy */
-    --background: 210 45% 12%; /* Deep navy blue */
-    --foreground: 0 0% 98%;
+    /* Dark theme - Deep medical palette */
+    --background: 0 4% 8%; /* #151516 almost black */
+    --foreground: 0 0% 96%;
 
-    --card: 210 40% 16%; /* Slightly lighter navy */
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 16%; /* #282828 dark gray */
+    --card-foreground: 0 0% 96%;
 
-    --popover: 210 40% 16%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 8 82% 66%; /* Coral/salmon accent */
-    --primary-foreground: 0 0% 100%;
+    --primary: 129 100% 67%; /* #55FF61 bright green */
+    --primary-foreground: 0 4% 8%;
 
-    --secondary: 180 95% 38%; /* Teal accent */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 195 100% 53%; /* #0BF4FF cyan */
+    --secondary-foreground: 0 4% 8%;
 
-    --muted: 210 35% 20%;
-    --muted-foreground: 0 0% 75%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 195 82% 48%; /* Bright blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 204 72% 56%; /* #3E9DE1 light blue */
+    --accent-foreground: 0 4% 8%;
 
-    --success: 155 85% 44%; /* Professional green */
-    --success-foreground: 0 0% 100%;
+    --success: 124 90% 27%; /* #129524 dark green */
+    --success-foreground: 0 0% 96%;
 
-    --info: 210 100% 48%; /* Info blue */
-    --info-foreground: 0 0% 100%;
+    --info: 206 100% 36%; /* #006FB9 blue */
+    --info-foreground: 0 0% 96%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 96%;
 
-    --border: 210 30% 24%;
-    --input: 210 30% 24%;
-    --ring: 8 82% 66%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 129 100% 67%;
 
-    --sidebar-background: 210 45% 12%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 8 82% 66%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 16%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 210 30% 24%;
-    --sidebar-ring: 8 82% 66%;
+    --sidebar-background: 0 4% 8%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 129 100% 67%;
+    --sidebar-primary-foreground: 0 4% 8%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 129 100% 67%;
 
     /* Shadows and effects for dark mode */
-    --shadow-elevated: 0 10px 40px -12px hsl(0 0% 0% / 0.4);
-    --shadow-soft: 0 4px 20px -8px hsl(0 0% 0% / 0.3);
-    --shadow-card: 0 2px 12px -4px hsl(0 0% 0% / 0.25);
+    --shadow-elevated: 0 10px 30px -10px hsl(var(--primary) / 0.5);
+    --shadow-soft: 0 6px 18px -8px hsl(var(--secondary) / 0.3);
   }
 }
 
