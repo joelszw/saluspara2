@@ -46,13 +46,35 @@ export function UsersManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch users
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('*')
+        .select('id, email, daily_count, monthly_count, created_at, subscription_status, enabled')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (usersError) throw usersError;
+
+      // Fetch roles for all users
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Merge users with their primary role
+      const usersWithRoles = (usersData || []).map(user => {
+        const userRoles = rolesData?.filter(r => r.user_id === user.id) || [];
+        // Get highest priority role
+        const role = userRoles.find(r => r.role === 'admin')?.role ||
+                    userRoles.find(r => r.role === 'premium')?.role ||
+                    userRoles.find(r => r.role === 'test')?.role ||
+                    userRoles.find(r => r.role === 'free')?.role ||
+                    'free';
+        return { ...user, role };
+      });
+
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -168,29 +190,34 @@ export function UsersManagement() {
 
   const updateUserRole = async (userId: string, newRole: 'free' | 'premium' | 'test' | 'admin') => {
     try {
-      const { error } = await supabase
+      // Delete existing roles
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new role
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role: newRole });
+
+      if (insertError) throw insertError;
+
+      // Update subscription status
+      const { error: updateError } = await supabase
         .from('users')
-        .update({ 
-          role: newRole,
-          subscription_status: newRole === 'premium' ? 'premium' : newRole === 'admin' ? 'admin' : 'none'
-        })
+        .update({ subscription_status: newRole === 'admin' ? 'admin' : newRole === 'premium' ? 'premium' : 'none' })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       // If promoting to admin, set force password change flag
       if (newRole === 'admin') {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('email')
-          .eq('id', userId)
-          .single();
-
-        if (userData?.email) {
-          await supabase.auth.admin.updateUserById(userId, {
-            user_metadata: { force_password_change: true }
-          });
-        }
+        await supabase.auth.admin.updateUserById(userId, {
+          user_metadata: { force_password_change: true }
+        });
       }
 
       toast({

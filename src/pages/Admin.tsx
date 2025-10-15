@@ -33,12 +33,18 @@ export default function Admin() {
 
       setUser(user);
 
-      // Check user role in database
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('role, daily_count, monthly_count')
-        .eq('id', user.id)
-        .single();
+      // Check for force password change
+      if (user.user_metadata?.force_password_change) {
+        setForcePasswordChange(true);
+        setLoading(false);
+        return;
+      }
+
+      // Check user role from user_roles table
+      const { data: userRoles, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching user role:', error);
@@ -51,7 +57,9 @@ export default function Admin() {
         return;
       }
 
-      if (userData.role !== 'admin') {
+      const isAdmin = userRoles?.some(r => r.role === 'admin');
+      
+      if (!isAdmin) {
         toast({
           title: "Acceso Denegado",
           description: "No tienes permisos de administrador",
@@ -61,21 +69,7 @@ export default function Admin() {
         return;
       }
 
-      setUserRole(userData.role);
-
-      // Check if this is the initial admin user and needs password change
-      // Check user metadata for force_password_change flag
-      if (user.email === 'admin@aware.doctor') {
-        // Check if password was recently set or if it's still the default
-        const createdAt = new Date(user.created_at);
-        const now = new Date();
-        const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-        
-        // If account is less than 24 hours old, force password change
-        if (hoursSinceCreation < 24 || user.user_metadata?.force_password_change) {
-          setForcePasswordChange(true);
-        }
-      }
+      setUserRole('admin');
 
     } catch (error) {
       console.error('Error checking admin access:', error);

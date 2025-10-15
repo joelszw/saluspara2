@@ -15,7 +15,11 @@ export function AdminPromoter() {
       setLoading(true);
 
       const { data: userResult } = await supabase.auth.getUser();
-      const targetEmail = userResult?.user?.email || 'admin@aware.doctor';
+      if (!userResult?.user?.email) {
+        throw new Error('No authenticated user found');
+      }
+      
+      const targetEmail = userResult.user.email;
       
       const { data, error } = await supabase.functions.invoke('promote-admin', {
         body: { email: targetEmail },
