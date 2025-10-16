@@ -71,11 +71,15 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
               </Button>
             </>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Dialog open={openLogin} onOpenChange={setOpenLogin}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
-                    {t('nav.login')}
+                  <Button 
+                    variant="outline"
+                    className="relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
+                  >
+                    <span className="relative z-10">{t('nav.login')}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -88,8 +92,12 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
               
               <Dialog open={openSignup} onOpenChange={setOpenSignup}>
                 <DialogTrigger asChild>
-                  <Button variant="default">
-                    {t('nav.signup')}
+                  <Button 
+                    variant="default"
+                    className="relative overflow-hidden group shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
+                  >
+                    <span className="relative z-10">{t('nav.signup')}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent>

@@ -176,21 +176,27 @@ export function AuthForm({ mode, onDone }: AuthFormProps) {
         )}
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <Button 
           variant="default" 
           onClick={handleEmailAuth} 
           disabled={loading || !email || !password || !TURNSTILE_SITE_KEY || !captchaToken}
+          className="relative overflow-hidden group flex-1 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
         >
-          {t(mode === "login" ? 'auth.login.button' : 'auth.signup.button')}
+          <span className="relative z-10">
+            {t(mode === "login" ? 'auth.login.button' : 'auth.signup.button')}
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         </Button>
         
         <Button 
           variant="outline" 
           onClick={handleGoogleAuth}
           disabled={loading}
+          className="relative overflow-hidden group flex-1 transition-all duration-300 hover:shadow-lg hover:shadow-secondary/20"
         >
-          {t('auth.google')}
+          <span className="relative z-10">{t('auth.google')}</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-secondary/0 via-secondary/10 to-secondary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         </Button>
       </div>
       
