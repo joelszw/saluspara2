@@ -108,36 +108,34 @@ const NewIndex = () => {
         {/* History section for logged in users */}
         {userId && history.length > 0 && (
           <motion.section 
-            className="py-16 bg-muted/30"
+            className="py-20 bg-muted/10"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="container mx-auto px-4">
-              <div className="max-w-4xl mx-auto">
-                <h2 className="text-2xl font-bold mb-8 text-center">Tu historial</h2>
-                <div className="space-y-4">
-                  {history.slice(0, 5).map((q) => (
-                    <motion.div
-                      key={q.id}
-                      className="p-4 bg-card border rounded-lg"
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                    >
-                      <p className="text-sm font-medium mb-2">{q.prompt}</p>
-                      {q.response && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {q.response}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(q.timestamp).toLocaleString()}
+            <div className="container mx-auto px-4 max-w-5xl">
+              <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center tracking-tight">Tu historial</h2>
+              <div className="space-y-3">
+                {history.slice(0, 5).map((q) => (
+                  <motion.div
+                    key={q.id}
+                    className="group p-6 bg-card border border-border/50 rounded-2xl hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                  >
+                    <p className="font-medium mb-3">{q.prompt}</p>
+                    {q.response && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        {q.response}
                       </p>
-                    </motion.div>
-                  ))}
-                </div>
+                    )}
+                    <p className="text-xs text-muted-foreground/70 mt-3">
+                      {new Date(q.timestamp).toLocaleString()}
+                    </p>
+                  </motion.div>
+                ))}
               </div>
             </div>
           </motion.section>

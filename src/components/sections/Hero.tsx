@@ -13,49 +13,31 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
   const { t } = useTranslation()
 
   return (
-    <section className="relative py-12 overflow-hidden min-h-screen">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
+    <section className="relative py-20 overflow-hidden">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
       
-      <div className="container mx-auto px-4 relative h-full">
+      <div className="container mx-auto px-4 relative max-w-5xl">
         <motion.div 
-          className="text-center mb-8"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Medical illustration */}
-          <motion.div 
-            className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <svg 
-              width="40" 
-              height="40" 
-              viewBox="0 0 100 100" 
-              className="text-white"
-              fill="currentColor"
-            >
-              <path d="M40 10 h20 v30 h30 v20 h-30 v30 h-20 v-30 h-30 v-20 h30 z" />
-            </svg>
-          </motion.div>
-          
           <motion.h1 
-            className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-success bg-clip-text text-transparent"
+            className="text-4xl md:text-6xl font-bold mb-6 tracking-tight"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
             {t('hero.title')}
           </motion.h1>
           
           <motion.p 
-            className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
+            className="text-xl text-muted-foreground max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
             {t('hero.subtitle')}
           </motion.p>
@@ -66,7 +48,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
           className="flex-1 flex flex-col"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
           <ConversationalChat 
             userId={userId}
