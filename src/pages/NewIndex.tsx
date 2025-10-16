@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "@/integrations/supabase/client"
 import { Header } from "@/components/navigation/Header"
+import { GlowMenu } from "@/components/navigation/GlowMenu"
 import { Hero } from "@/components/sections/Hero"
 import { Features } from "@/components/sections/Features"
 import { Community } from "@/components/sections/Community"
@@ -145,6 +146,7 @@ const NewIndex = () => {
       </main>
       
       <FooterLegal />
+      <GlowMenu />
     </div>
   )
 }
