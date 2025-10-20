@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "@/integrations/supabase/client"
-import { Sidebar } from "@/components/navigation/Sidebar"
 import { Header } from "@/components/navigation/Header"
-import { StatsCards } from "@/components/sections/StatsCards"
-import { ConversationalChat } from "@/components/chat/ConversationalChat"
+import { Hero } from "@/components/sections/Hero"
 import { Features } from "@/components/sections/Features"
 import { Community } from "@/components/sections/Community"
 import { LLMsShowcase } from "@/components/sections/LLMsShowcase"
@@ -93,116 +91,58 @@ const NewIndex = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#282828' }}>
-      {/* Sidebar */}
-      <Sidebar activeSection="chat" />
+    <div className="min-h-screen bg-background">
+      <Header userEmail={userEmail} history={history} />
       
-      {/* Main Content */}
-      <div className="ml-64">
-        {/* Top Header */}
-        <div className="sticky top-0 z-10 border-b px-8 py-4" style={{ 
-          backgroundColor: '#282828',
-          borderColor: '#3a3a3a'
-        }}>
-          <Header userEmail={userEmail} history={history} />
-        </div>
-
-        {/* Dashboard Content */}
-        <main className="p-8">
-          {/* Welcome Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+      <main>
+        <Hero 
+          userId={userId} 
+          counts={counts} 
+          onUsageUpdate={handleUsageUpdate} 
+        />
+        <Features />
+        <Community />
+        <LLMsShowcase />
+        <Freemium />
+        
+        {/* History section for logged in users */}
+        {userId && history.length > 0 && (
+          <motion.section 
+            className="py-20 bg-muted/10"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl font-bold mb-2" style={{ color: '#EDEDED' }}>
-              Bienvenido de nuevo{userEmail ? `, ${userEmail.split('@')[0]}` : ''}
-            </h1>
-            <p className="text-lg" style={{ color: '#C8C8C8' }}>
-              Tu asistente médico especializado en traumatología y ortopedia
-            </p>
-          </motion.div>
-
-          {/* Stats Cards */}
-          {userId && (
-            <StatsCards 
-              dailyCount={counts.daily} 
-              monthlyCount={counts.monthly}
-            />
-          )}
-
-          {/* Main Chat Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl p-8 mb-8 border"
-            style={{
-              backgroundColor: '#2a2a2a',
-              borderColor: '#3a3a3a'
-            }}
-          >
-            <h2 className="text-2xl font-bold mb-6" style={{ color: '#EDEDED' }}>
-              Chat Médico
-            </h2>
-            <ConversationalChat 
-              userId={userId}
-              counts={counts}
-              onUsageUpdate={handleUsageUpdate}
-            />
-          </motion.div>
-
-          {/* Recent History */}
-          {userId && history.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-2xl p-8 border"
-              style={{
-                backgroundColor: '#2a2a2a',
-                borderColor: '#3a3a3a'
-              }}
-            >
-              <h2 className="text-2xl font-bold mb-6" style={{ color: '#EDEDED' }}>
-                Consultas Recientes
-              </h2>
-              <div className="space-y-4">
+            <div className="container mx-auto px-4 max-w-5xl">
+              <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center tracking-tight">Tu historial</h2>
+              <div className="space-y-3">
                 {history.slice(0, 5).map((q) => (
-                  <div
+                  <motion.div
                     key={q.id}
-                    className="p-4 rounded-xl border transition-all hover:border-opacity-60"
-                    style={{
-                      backgroundColor: '#282828',
-                      borderColor: '#3a3a3a'
-                    }}
+                    className="group p-6 bg-card border border-border/50 rounded-2xl hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
                   >
-                    <p className="font-medium mb-2" style={{ color: '#EDEDED' }}>{q.prompt}</p>
+                    <p className="font-medium mb-3">{q.prompt}</p>
                     {q.response && (
-                      <p className="text-sm line-clamp-2 mb-2" style={{ color: '#C8C8C8' }}>
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                         {q.response}
                       </p>
                     )}
-                    <p className="text-xs" style={{ color: '#C8C8C8', opacity: 0.7 }}>
+                    <p className="text-xs text-muted-foreground/70 mt-3">
                       {new Date(q.timestamp).toLocaleString()}
                     </p>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </motion.div>
-          )}
-        </main>
-
-        {/* Other Sections */}
-        <div style={{ backgroundColor: '#1f1f1f' }}>
-          <Features />
-          <Community />
-          <LLMsShowcase />
-          <Freemium />
-        </div>
-        
-        <FooterLegal />
-      </div>
+            </div>
+          </motion.section>
+        )}
+      </main>
+      
+      <FooterLegal />
     </div>
   )
 }
