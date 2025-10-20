@@ -9,13 +9,13 @@ All colors MUST be HSL.
 @layer base {
 :root {
     /* Light theme */
-    --background: 0 0% 93%; /* #EDEDED */
+    --background: 0 0% 100%; /* #FFFFFF */
     --foreground: 0 0% 16%; /* #282828 */
 
-    --card: 0 0% 93%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 16%;
 
-    --popover: 0 0% 93%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 16%;
 
     --primary: 143 70% 38%; /* Verde oscuro visible #2DB862 */
