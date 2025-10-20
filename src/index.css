@@ -18,7 +18,7 @@ All colors MUST be HSL.
     --popover: 0 0% 93%;
     --popover-foreground: 0 0% 16%;
 
-    --primary: 143 80% 45%; /* Verde más oscuro para light theme */
+    --primary: 143 70% 38%; /* Verde oscuro visible #2DB862 */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 205 88% 20%; /* #07365F */
@@ -27,10 +27,10 @@ All colors MUST be HSL.
     --muted: 0 0% 78%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 143 75% 42%; /* Verde oscuro para acentos */
+    --accent: 143 70% 38%; /* Verde oscuro para acentos */
     --accent-foreground: 0 0% 100%;
 
-    --success: 143 80% 45%;
+    --success: 143 70% 38%;
     --success-foreground: 0 0% 100%;
 
     --info: 205 88% 20%;
@@ -48,7 +48,7 @@ All colors MUST be HSL.
     /* Sidebar */
     --sidebar-background: 0 0% 93%;
     --sidebar-foreground: 0 0% 16%;
-    --sidebar-primary: 143 80% 45%;
+    --sidebar-primary: 143 70% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 88%;
     --sidebar-accent-foreground: 0 0% 16%;
