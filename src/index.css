@@ -19,7 +19,7 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 16%;
 
     --primary: 143 91% 65%; /* #57F790 */
-    --primary-foreground: 0 0% 16%; /* #282828 - texto oscuro */
+    --primary-foreground: 0 0% 16%;
 
     --secondary: 205 88% 20%; /* #07365F */
     --secondary-foreground: 0 0% 93%;
@@ -28,10 +28,10 @@ All colors MUST be HSL.
     --muted-foreground: 0 0% 40%;
 
     --accent: 135 100% 50%; /* #00FF40 */
-    --accent-foreground: 0 0% 16%; /* #282828 - texto oscuro */
+    --accent-foreground: 0 0% 16%;
 
     --success: 143 91% 65%;
-    --success-foreground: 0 0% 16%; /* #282828 */
+    --success-foreground: 0 0% 16%;
 
     --info: 205 88% 20%;
     --info-foreground: 0 0% 93%;
@@ -49,7 +49,7 @@ All colors MUST be HSL.
     --sidebar-background: 0 0% 93%;
     --sidebar-foreground: 0 0% 16%;
     --sidebar-primary: 143 91% 65%;
-    --sidebar-primary-foreground: 0 0% 16%; /* #282828 */
+    --sidebar-primary-foreground: 0 0% 16%;
     --sidebar-accent: 0 0% 88%;
     --sidebar-accent-foreground: 0 0% 16%;
     --sidebar-border: 0 0% 78%;
@@ -74,7 +74,7 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 93%;
 
     --primary: 143 91% 65%; /* #57F790 */
-    --primary-foreground: 0 0% 16%; /* Texto oscuro en modo dark */
+    --primary-foreground: 0 0% 16%;
 
     --secondary: 205 88% 20%; /* #07365F */
     --secondary-foreground: 0 0% 93%;
@@ -83,10 +83,10 @@ All colors MUST be HSL.
     --muted-foreground: 0 0% 78%; /* #C8C8C8 */
 
     --accent: 135 100% 50%; /* #00FF40 */
-    --accent-foreground: 0 0% 16%; /* Texto oscuro en modo dark */
+    --accent-foreground: 0 0% 16%;
 
     --success: 143 91% 65%;
-    --success-foreground: 0 0% 16%; /* Texto oscuro en modo dark */
+    --success-foreground: 0 0% 16%;
 
     --info: 205 88% 20%;
     --info-foreground: 0 0% 93%;
@@ -101,7 +101,7 @@ All colors MUST be HSL.
     --sidebar-background: 0 0% 16%;
     --sidebar-foreground: 0 0% 93%;
     --sidebar-primary: 143 91% 65%;
-    --sidebar-primary-foreground: 0 0% 16%; /* Texto oscuro en modo dark */
+    --sidebar-primary-foreground: 0 0% 16%;
     --sidebar-accent: 0 0% 20%;
     --sidebar-accent-foreground: 0 0% 93%;
     --sidebar-border: 0 0% 25%;
