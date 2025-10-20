@@ -13,7 +13,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
   const { t } = useTranslation()
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center py-24 px-4" style={{ backgroundColor: '#282828' }}>
+    <section className="relative min-h-screen flex items-center justify-center py-24 px-4 bg-background">
       <div className="container mx-auto max-w-4xl">
         <motion.div 
           className="text-center mb-16"
@@ -22,8 +22,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
           transition={{ duration: 0.6 }}
         >
           <motion.h1 
-            className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight"
-            style={{ color: '#EDEDED' }}
+            className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight text-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -32,8 +31,7 @@ export function Hero({ userId, counts, onUsageUpdate }: HeroProps) {
           </motion.h1>
           
           <motion.p 
-            className="text-xl md:text-2xl max-w-2xl mx-auto mb-20"
-            style={{ color: '#C8C8C8' }}
+            className="text-xl md:text-2xl max-w-2xl mx-auto mb-20 text-muted-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
