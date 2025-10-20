@@ -252,7 +252,7 @@ const Index = () => {
                   />
                 )}
                 <Button
-                  variant="hero"
+                  variant="gradient"
                   size="lg"
                   disabled={!prompt.trim() || loading || (!userId && (!TURNSTILE_SITE_KEY || !guestCaptchaToken))}
                   onClick={handleAsk}

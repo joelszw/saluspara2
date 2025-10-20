@@ -7,109 +7,110 @@ All colors MUST be HSL.
 */
 
 @layer base {
-:root {
-    /* Light theme */
+  :root {
+    /* Light theme - Aspire Design System */
     --background: 0 0% 100%; /* #FFFFFF */
-    --foreground: 0 0% 16%; /* #282828 */
+    --foreground: 228 12% 16%; /* Texto oscuro azulado */
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 16%;
+    --card-foreground: 228 12% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 16%;
+    --popover-foreground: 228 12% 16%;
 
-    --primary: 143 70% 38%; /* Verde oscuro visible #2DB862 */
+    --primary: 244 88% 62%; /* Azul-morado vibrante #6366F1 similar Aspire */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 205 88% 20%; /* #07365F */
-    --secondary-foreground: 0 0% 93%;
+    --secondary: 14 100% 62%; /* Naranja coral #FF5E3D */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 78%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 228 8% 45%;
 
-    --accent: 143 70% 38%; /* Verde oscuro para acentos */
+    --accent: 14 100% 62%; /* Naranja coral para acentos */
     --accent-foreground: 0 0% 100%;
 
-    --success: 143 70% 38%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --info: 205 88% 20%;
-    --info-foreground: 0 0% 93%;
+    --info: 244 88% 62%;
+    --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 93%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 78%;
-    --input: 0 0% 78%;
-    --ring: 143 91% 65%;
+    --border: 220 14% 91%;
+    --input: 220 14% 91%;
+    --ring: 244 88% 62%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 93%;
-    --sidebar-foreground: 0 0% 16%;
-    --sidebar-primary: 143 70% 38%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 228 12% 16%;
+    --sidebar-primary: 244 88% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 88%;
-    --sidebar-accent-foreground: 0 0% 16%;
-    --sidebar-border: 0 0% 78%;
-    --sidebar-ring: 143 91% 65%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 228 12% 16%;
+    --sidebar-border: 220 14% 91%;
+    --sidebar-ring: 244 88% 62%;
 
-    /* Shadows and effects */
-    --shadow-elevated: 0 10px 30px -10px hsl(143 91% 65% / 0.35);
-    --shadow-soft: 0 6px 18px -8px hsl(205 88% 20% / 0.25);
-    --gradient-primary: linear-gradient(135deg, hsl(143 91% 65%), hsl(135 100% 50%));
-    --gradient-secondary: linear-gradient(135deg, hsl(205 88% 20%), hsl(143 91% 65%));
+    /* Shadows and effects - Aspire style */
+    --shadow-elevated: 0 20px 60px -15px hsl(244 88% 62% / 0.3);
+    --shadow-soft: 0 8px 30px -8px hsl(228 12% 16% / 0.12);
+    --gradient-primary: linear-gradient(135deg, hsl(244 88% 62%), hsl(265 89% 68%));
+    --gradient-secondary: linear-gradient(135deg, hsl(14 100% 62%), hsl(25 100% 58%));
+    --gradient-hero: linear-gradient(135deg, hsl(244 88% 62% / 0.1), hsl(14 100% 62% / 0.1));
   }
 
   .dark {
-    /* Dark theme */
-    --background: 0 0% 16%; /* #282828 */
-    --foreground: 0 0% 93%; /* #EDEDED */
+    /* Dark theme - Aspire Design System */
+    --background: 228 20% 10%; /* Fondo oscuro azulado */
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 20%;
-    --card-foreground: 0 0% 93%;
+    --card: 228 18% 14%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 20%;
-    --popover-foreground: 0 0% 93%;
+    --popover: 228 18% 14%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 143 91% 65%; /* #57F790 */
-    --primary-foreground: 0 0% 16%;
+    --primary: 244 88% 62%; /* Azul-morado vibrante */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 205 88% 20%; /* #07365F */
-    --secondary-foreground: 0 0% 93%;
+    --secondary: 14 100% 62%; /* Naranja coral */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 25%;
-    --muted-foreground: 0 0% 78%; /* #C8C8C8 */
+    --muted: 228 15% 20%;
+    --muted-foreground: 220 14% 65%;
 
-    --accent: 135 100% 50%; /* #00FF40 */
-    --accent-foreground: 0 0% 16%;
+    --accent: 14 100% 62%; /* Naranja coral para acentos */
+    --accent-foreground: 0 0% 100%;
 
-    --success: 143 91% 65%;
-    --success-foreground: 0 0% 16%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
 
-    --info: 205 88% 20%;
-    --info-foreground: 0 0% 93%;
+    --info: 244 88% 62%;
+    --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 93%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 25%;
-    --input: 0 0% 25%;
-    --ring: 143 91% 65%;
+    --border: 228 15% 20%;
+    --input: 228 15% 20%;
+    --ring: 244 88% 62%;
 
-    --sidebar-background: 0 0% 16%;
-    --sidebar-foreground: 0 0% 93%;
-    --sidebar-primary: 143 91% 65%;
-    --sidebar-primary-foreground: 0 0% 16%;
-    --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 93%;
-    --sidebar-border: 0 0% 25%;
-    --sidebar-ring: 143 91% 65%;
+    --sidebar-background: 228 20% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 244 88% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 18% 14%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 228 15% 20%;
+    --sidebar-ring: 244 88% 62%;
 
     /* Shadows and effects for dark mode */
-    --shadow-elevated: 0 10px 30px -10px hsl(143 91% 65% / 0.5);
-    --shadow-soft: 0 6px 18px -8px hsl(205 88% 20% / 0.3);
+    --shadow-elevated: 0 20px 60px -15px hsl(244 88% 62% / 0.4);
+    --shadow-soft: 0 8px 30px -8px hsl(0 0% 0% / 0.3);
   }
 }
 
@@ -119,10 +120,23 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    @apply font-heading font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-5xl md:text-6xl lg:text-7xl;
+  }
+
+  h2 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h3 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
   }
 }
