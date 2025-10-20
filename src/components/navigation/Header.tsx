@@ -30,7 +30,7 @@ export function Header({ userEmail, history = [] }: HeaderProps) {
     <header className="fixed top-0 left-0 right-0 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
         <a href="/" className="font-semibold text-lg text-primary">
-          Salustia
+          BuscaCot
         </a>
         
         <div className="hidden md:flex items-center space-x-6">

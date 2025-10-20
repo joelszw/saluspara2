@@ -1,4 +1,4 @@
-# Salustia - Medical AI Assistant
+# BuscaCot - Medical AI Assistant
 
 Asistente médico especializado en traumatología y ortopedia con integración a PubMed para referencias científicas actualizadas.
 

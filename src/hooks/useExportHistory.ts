@@ -91,7 +91,7 @@ export const useExportHistory = () => {
       link.href = url;
       
       const dateStr = `${fromDateStr}-${toDateStr}`;
-      link.download = `salustia-historial-${dateStr}.${format}`;
+      link.download = `buscacot-historial-${dateStr}.${format}`;
       
       document.body.appendChild(link);
       link.click();

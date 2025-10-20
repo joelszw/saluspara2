@@ -30,7 +30,7 @@ const resources = {
       "chat.patient_warning.message": "Si eres paciente, por favor consulta a tu médico para cualquier duda médica. No utilices esta información para autodiagnóstico o tratamiento.",
       
       // Features Section
-      "features.title": "¿Por qué elegir Salustia?",
+      "features.title": "¿Por qué elegir BuscaCot?",
       "features.precision.title": "Precisión clínica especializada",
       "features.precision.desc": "Entrenado específicamente en traumatología y ortopedia con los últimos protocolos médicos.",
       "features.efficiency.title": "Agiliza tu consulta",
@@ -40,7 +40,7 @@ const resources = {
       
       // Community Section
       "community.title": "Únete a la comunidad médica",
-      "community.subtitle": "Más de 1,000 profesionales de traumatología ya usan Salustia",
+      "community.subtitle": "Más de 1,000 profesionales de traumatología ya usan BuscaCot",
       "community.cta": "Crear cuenta gratuita",
       "community.disclaimer": "Información para contrastar con tu experiencia como médico; agiliza tu trabajo y te ayuda en tu práctica diaria.",
       
@@ -109,7 +109,7 @@ const resources = {
       "chat.patient_warning.message": "If you are a patient, please consult your doctor for any medical questions. Do not use this information for self-diagnosis or treatment.",
       
       // Features Section
-      "features.title": "Why choose Salustia?",
+      "features.title": "Why choose BuscaCot?",
       "features.precision.title": "Specialized clinical precision",
       "features.precision.desc": "Specifically trained in trauma and orthopedics with the latest medical protocols.",
       "features.efficiency.title": "Streamline your consultation",
@@ -119,7 +119,7 @@ const resources = {
       
       // Community Section
       "community.title": "Join the medical community",
-      "community.subtitle": "Over 1,000 trauma professionals already use Salustia",
+      "community.subtitle": "Over 1,000 trauma professionals already use BuscaCot",
       "community.cta": "Create free account",
       "community.disclaimer": "Information to contrast with your medical experience; streamlines your work and helps in your daily practice.",
       

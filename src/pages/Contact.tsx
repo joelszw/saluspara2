@@ -9,16 +9,16 @@ const TURNSTILE_SITE_KEY = (window as any)?.__TURNSTILE_SITE_KEY__ ?? "";
 
 const Contact = () => {
   useEffect(() => {
-    document.title = "Contáctanos – Salustia";
+    document.title = "Contáctanos – BuscaCot";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Contacta al equipo de Salustia para soporte y consultas médicas.");
+    if (meta) meta.setAttribute("content", "Contacta al equipo de BuscaCot para soporte y consultas médicas.");
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <nav className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-          <a href="/" className="font-semibold text-lg">Salustia</a>
+          <a href="/" className="font-semibold text-lg">BuscaCot</a>
           <div className="flex items-center gap-2">
             <a href="/" className="px-3 py-2 text-sm hover:underline">Inicio</a>
             <a href="https://aware.doctor" target="_blank" rel="noreferrer" className="px-3 py-2 text-sm hover:underline">Aware.doctor</a>

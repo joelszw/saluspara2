@@ -11,7 +11,7 @@ export function FooterLegal() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="font-bold text-lg mb-4">Salustia</h3>
+            <h3 className="font-bold text-lg mb-4">BuscaCot</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Asistente médico especializado en traumatología y ortopedia
             </p>
@@ -54,8 +54,8 @@ export function FooterLegal() {
                 </a>
               </li>
               <li>
-                <a href="mailto:info@salustia.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  info@salustia.com
+                <a href="mailto:info@buscacot.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  info@buscacot.com
                 </a>
               </li>
             </ul>
@@ -84,7 +84,7 @@ export function FooterLegal() {
         <Separator className="mb-6" />
         
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} Salustia. Todos los derechos reservados.</p>
+          <p>&copy; {currentYear} BuscaCot. Todos los derechos reservados.</p>
           <p className="mt-2 md:mt-0">
             Hecho con ❤️ para profesionales de la salud
           </p>

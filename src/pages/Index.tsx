@@ -175,7 +175,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <nav className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-          <a href="/" className="font-semibold text-lg">Salustia</a>
+          <a href="/" className="font-semibold text-lg">BuscaCot</a>
           <div className="flex items-center gap-2">
             <a href="/contacto" className="px-3 py-2 text-sm hover:underline">Contáctanos</a>
             <a href="https://aware.doctor" target="_blank" rel="noreferrer" className="px-3 py-2 text-sm hover:underline">Aware.doctor</a>
@@ -216,7 +216,7 @@ const Index = () => {
 
       <main className="max-w-3xl mx-auto px-4 pt-28 pb-24">
         <section className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Salustia – Asistente médico de traumatología y ortopedia</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">BuscaCot – Asistente médico de traumatología y ortopedia</h1>
           <p className="text-muted-foreground">Consulta en español. Límite gratuito para invitados. Autenticación con Supabase.</p>
         </section>
 
