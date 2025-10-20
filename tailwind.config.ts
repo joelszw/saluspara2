@@ -82,7 +82,8 @@ export default {
 			},
 			boxShadow: {
 				'elevated': 'var(--shadow-elevated)',
-				'soft': 'var(--shadow-soft)'
+				'soft': 'var(--shadow-soft)',
+				'glow': 'var(--shadow-glow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
