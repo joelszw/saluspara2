@@ -8,111 +8,111 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light theme - Medical AI Design System */
-    --background: 220 25% 10%; /* Fondo azul oscuro */
-    --foreground: 0 0% 100%; /* Texto blanco */
+    /* Light theme - Aspire Design System */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 0 0% 10%; /* Texto casi negro */
 
-    --card: 220 20% 14%; /* Tarjetas azul oscuro */
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 220 20% 14%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 213 100% 60%; /* Azul brillante */
-    --primary-foreground: 0 0% 100%;
+    --primary: 145 100% 50%; /* Verde neón brillante #00FF66 */
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 25 100% 58%; /* Naranja vibrante */
+    --secondary: 0 0% 15%; /* Gris oscuro */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 213 100% 60%; /* Azul brillante para acentos */
-    --accent-foreground: 0 0% 100%;
+    --accent: 145 100% 50%; /* Verde neón para acentos */
+    --accent-foreground: 0 0% 10%;
 
-    --success: 145 65% 50%;
-    --success-foreground: 0 0% 100%;
+    --success: 145 100% 50%;
+    --success-foreground: 0 0% 10%;
 
-    --info: 213 100% 60%;
+    --info: 210 100% 50%;
     --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 20%;
-    --ring: 213 100% 60%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 145 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Sidebar */
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 213 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 14%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 213 100% 60%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 145 100% 50%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 145 100% 50%;
 
-    /* Shadows and effects - Medical AI style */
-    --shadow-elevated: 0 20px 60px -15px hsl(213 100% 60% / 0.3);
-    --shadow-soft: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
-    --shadow-glow: 0 0 40px hsl(213 100% 60% / 0.5);
-    --gradient-primary: linear-gradient(135deg, hsl(213 100% 60%), hsl(213 100% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(25 100% 58%), hsl(25 100% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(213 100% 60% / 0.15), hsl(25 100% 58% / 0.15));
+    /* Shadows and effects - Aspire style */
+    --shadow-elevated: 0 20px 60px -15px hsl(145 100% 50% / 0.3);
+    --shadow-soft: 0 8px 30px -8px hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 30px hsl(145 100% 50% / 0.4);
+    --gradient-primary: linear-gradient(135deg, hsl(145 100% 50%), hsl(160 100% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%));
+    --gradient-hero: linear-gradient(135deg, hsl(145 100% 50% / 0.1), hsl(160 100% 45% / 0.1));
   }
 
   .dark {
-    /* Dark theme - Medical AI Design System (consistente con light) */
-    --background: 220 25% 10%; /* Fondo azul oscuro */
+    /* Dark theme - Aspire Design System (fondo oscuro con verde neón) */
+    --background: 0 0% 10%; /* #1a1a1a - Fondo oscuro como Aspire */
     --foreground: 0 0% 100%; /* Texto blanco */
 
-    --card: 220 20% 14%; /* Tarjetas azul oscuro */
+    --card: 0 0% 13%; /* Tarjetas ligeramente más claras */
     --card-foreground: 0 0% 100%;
 
-    --popover: 220 20% 14%;
+    --popover: 0 0% 13%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 213 100% 60%; /* Azul brillante */
-    --primary-foreground: 0 0% 100%;
+    --primary: 145 100% 50%; /* Verde neón brillante #00FF66 */
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 25 100% 58%; /* Naranja vibrante */
+    --secondary: 0 0% 20%; /* Gris oscuro */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 20%;
+    --muted: 0 0% 18%;
     --muted-foreground: 0 0% 70%;
 
-    --accent: 213 100% 60%; /* Azul brillante para acentos */
-    --accent-foreground: 0 0% 100%;
+    --accent: 145 100% 50%; /* Verde neón para acentos */
+    --accent-foreground: 0 0% 10%;
 
-    --success: 145 65% 50%;
-    --success-foreground: 0 0% 100%;
+    --success: 145 100% 50%;
+    --success-foreground: 0 0% 10%;
 
-    --info: 213 100% 60%;
+    --info: 210 100% 50%;
     --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 20%;
-    --ring: 213 100% 60%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 145 100% 50%;
 
-    --sidebar-background: 220 25% 10%;
+    --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 213 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 14%;
+    --sidebar-primary: 145 100% 50%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 13%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 213 100% 60%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 145 100% 50%;
 
-    /* Shadows and effects for dark mode con brillo azul */
-    --shadow-elevated: 0 20px 60px -15px hsl(213 100% 60% / 0.4);
+    /* Shadows and effects for dark mode con brillo verde neón */
+    --shadow-elevated: 0 20px 60px -15px hsl(145 100% 50% / 0.4);
     --shadow-soft: 0 8px 30px -8px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 40px hsl(213 100% 60% / 0.6);
+    --shadow-glow: 0 0 40px hsl(145 100% 50% / 0.6);
   }
 }
 
