@@ -3,7 +3,8 @@
 -- =====================================================
 -- Project: Salustia Medical AI Assistant
 -- Database: PostgreSQL via Supabase
--- Generated: 2025-10-15
+-- Generated: 2025-10-21
+-- Last Security Update: 2025-10-21
 -- =====================================================
 
 -- IMPORTANTE: Ejecutar estos comandos en orden secuencial
@@ -164,8 +165,7 @@ CREATE POLICY "Authenticated users can view their own queries, admins can view"
   ON public.queries FOR SELECT
   USING (
     ((auth.uid() IS NOT NULL) AND (user_id = auth.uid())) OR 
-    public.has_role(auth.uid(), 'admin'::app_role) OR 
-    (((auth.jwt() ->> 'role'::text) = 'service_role'::text) AND (user_id IS NULL))
+    public.has_role(auth.uid(), 'admin'::app_role)
   );
 
 CREATE POLICY "Users can insert their own queries"
@@ -244,19 +244,11 @@ AS $$
       WHEN user_id = auth.uid() OR public.has_role(auth.uid(), 'admin'::app_role)
       THEN (SELECT email FROM public.users WHERE id = user_id)
       ELSE NULL
-    END;
+  END;
 $$;
 
--- Función para obtener rol de usuario (LEGACY - para compatibilidad)
-CREATE OR REPLACE FUNCTION public.get_user_role(user_id uuid)
-RETURNS user_role
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = 'public'
-AS $$
-  SELECT role FROM public.users WHERE id = user_id;
-$$;
+-- NOTA: La función get_user_role() legacy ha sido eliminada por motivos de seguridad.
+-- Se recomienda usar has_role() y get_user_primary_role() en su lugar.
 
 -- Función para registrar eventos de seguridad
 CREATE OR REPLACE FUNCTION public.log_security_event(
@@ -451,7 +443,7 @@ BEGIN
 END;
 $$;
 
--- Función para promover usuario a admin
+-- Función para promover usuario a admin (ACTUALIZADA - usa solo user_roles)
 CREATE OR REPLACE FUNCTION public.promote_to_admin(user_email text)
 RETURNS void
 LANGUAGE plpgsql
@@ -477,9 +469,8 @@ BEGIN
   VALUES (target_user_id, 'admin'::app_role)
   ON CONFLICT (user_id, role) DO NOTHING;
   
-  UPDATE public.users 
-  SET subscription_status = 'admin'
-  WHERE id = target_user_id;
+  -- NOTA: Ya no actualiza subscription_status en users table
+  -- El sistema de roles ahora usa exclusivamente user_roles table
 END;
 $$;
 
