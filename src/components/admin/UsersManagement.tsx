@@ -19,7 +19,6 @@ interface UserData {
   daily_count: number;
   monthly_count: number;
   created_at: string;
-  subscription_status: string;
   enabled: boolean;
 }
 
@@ -50,7 +49,7 @@ export function UsersManagement() {
       // Fetch users
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('id, email, daily_count, monthly_count, created_at, subscription_status, enabled')
+        .select('id, email, daily_count, monthly_count, created_at, enabled')
         .order('created_at', { ascending: false });
 
       if (usersError) throw usersError;
@@ -114,9 +113,7 @@ export function UsersManagement() {
         .insert({
           id: authData.user.id,
           email: newUser.email,
-          role: newUser.role,
-          auth_method: 'email',
-          subscription_status: newUser.role === 'premium' ? 'premium' : newUser.role === 'admin' ? 'admin' : 'none'
+          auth_method: 'email'
         });
 
       if (dbError) throw dbError;
@@ -204,14 +201,6 @@ export function UsersManagement() {
         .insert({ user_id: userId, role: newRole });
 
       if (insertError) throw insertError;
-
-      // Update subscription status
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ subscription_status: newRole === 'admin' ? 'admin' : newRole === 'premium' ? 'premium' : 'none' })
-        .eq('id', userId);
-
-      if (updateError) throw updateError;
 
       // If promoting to admin, set force password change flag
       if (newRole === 'admin') {
