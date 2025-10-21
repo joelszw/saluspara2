@@ -65,16 +65,16 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.email);
 
-    // Check if user is admin in our users table
+    // Check if user is admin using the user_roles table
     console.log('Checking user role...');
-    const { data: userData, error: roleError } = await supabaseAdmin
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    const { data: isAdmin, error: roleError } = await supabaseAdmin
+      .rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
 
-    if (roleError || userData?.role !== 'admin') {
-      console.log('Admin check failed:', roleError?.message, 'Role:', userData?.role);
+    if (roleError || !isAdmin) {
+      console.log('Admin check failed:', roleError?.message, 'Is admin:', isAdmin);
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
